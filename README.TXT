@@ -1,6 +1,8 @@
 The Slimy Lichmummy Manual 0.40
 (it's the Lichmummy that's slimy, not the manual)
 
+![screenshot](screenshot.webp)
+
 by Ulf Åström
 happyponyland.net
 ulf.astrom@gmail.com
