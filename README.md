@@ -1,7 +1,7 @@
 The Slimy Lichmummy Manual 0.40
 (it's the Lichmummy that's slimy, not the manual)
 
-![art][art.jpg]
+![art](art.jpg)
 
 ![screenshot](screenshot.webp)
 
