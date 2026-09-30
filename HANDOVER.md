@@ -1,6 +1,10 @@
 # The Slimy Lichmummy — handover
 
 ## RVIP progress
+- Inventory icons: player.c sends glyph + tile per row (`web_gent_tile`/`web_gent_glyph`
+  in console.c, shared with Visible); tiles on: icon in columns 2-4, side min(2 cols,
+  row height); text: `a) ! name`. Build now warning-free (fixes incl. real bugs: ui.c
+  `*shit`, missile.c `*casualty`, unsigned abs in ai.c/fov.c).
 - **Mac session (2026-09-30):** pane check done (TSL/tsl-go/None, all
   windows, A−/A+ per window, Enter menu, `x`, `<`/`>`, help, sound + music
   fetched/played per event, save-and-quit/resume, quit, death). Fixed:
@@ -38,8 +42,7 @@
   game starts.
 - **Open problems now:** one real death on the live site in the user's
   browser (the pane's user agent is filtered) -> check graveyard.html;
-  RogueBasin/happyponyland year cross-check (2006) still not done; inventory
-  icons (RVIP content rule) not done; the Whole screen window also shows in
+  RogueBasin/happyponyland year cross-check (2006) still not done; the Whole screen window also shows in
   the multi-window list (harmless).
 - **tsl-go assets (resolved 2026-09-30: permission):** the user asked to add
   the tiles and sounds of github.com/c0ze/tsl-go (Go port of TSL, @0c62dcf).
