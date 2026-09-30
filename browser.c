@@ -263,7 +263,8 @@ int browse(menu_item_t ** list, int totitms, const int mode,
 
 	st_rev(false);
 	
-	if (list[item_i]->explanation)
+	/* RVIP: in an item prompt Enter chooses; no inventory hint. */
+	if (list[item_i]->explanation && mode != MENU_PICK)
 	{
 	  st_move(sep2, 2);
 	  st_addstr(list[item_i]->explanation);
@@ -303,8 +304,101 @@ int browse(menu_item_t ** list, int totitms, const int mode,
     while (1)
     {
       input = get_keypress();
-        
+
+      /* RVIP: numpad 8/2 move the cursor in every list. */
+      if (input == kt_np8)
+	input = kt_dir_up;
+      else if (input == kt_np2)
+	input = kt_dir_down;
+
       action = key_to_action(input);
+
+      /* RVIP: in an item submenu, numpad 4 goes back, 6 chooses. */
+      if (mode == MENU_GENERIC && input == kt_np4)
+	return -1;
+
+      if (mode == MENU_GENERIC && input == kt_np6)
+      {
+	if (ret_action != NULL)
+	  *ret_action = action_select;
+
+	return b->cur_pos;
+      }
+
+      /*
+	RVIP: inventory keys. Letter = main action, Shift+letter drops,
+	Ctrl+letter examines (cursor to it; the description is shown).
+	Enter, Space, NumPad5 open the item menu; + main action, - drop,
+	* examine, . or NumPad0 close.
+      */
+      if (mode == MENU_USE)
+      {
+	action_t want = action_undefined;
+	int hit = -1;
+
+	if (input == '\n' || input == '\r' || input == ' ' || input == kt_np5)
+	  want = action_flip;
+	else if (input == '+')
+	  want = action_select;
+	else if (input == '-')
+	  want = action_drop;
+	else if (input == '*')
+	  continue;
+	else if (input == '.')
+	  return -1;
+	else
+	{
+	  for (i = 0; i < totitms; i++)
+	    if (input == list[i]->letter)
+	      break;
+
+	  if (i < totitms)
+	  {
+	    hit = i;
+	    want = action_select;
+	  }
+	  else if (input >= 'A' && input <= 'Z')
+	  {
+	    for (i = 0; i < totitms; i++)
+	      if (input - 'A' + 'a' == list[i]->letter)
+		break;
+
+	    if (i < totitms)
+	    {
+	      hit = i;
+	      want = action_drop;
+	    }
+	  }
+	  else if (input >= 1 && input <= 26 && input != '\t' &&
+		   input != '\n' && input != '\r' && input != 8)
+	  {
+	    for (i = 0; i < totitms; i++)
+	      if (input - 1 + 'a' == list[i]->letter)
+		break;
+
+	    if (i < totitms)
+	    {
+	      b->cur_pos = i;
+	      browser_scroll(b, list, b->total_items);
+	      goto redraw_list;
+	    }
+	  }
+	}
+
+	if (want != action_undefined)
+	{
+	  if (hit >= 0)
+	  {
+	    b->cur_pos = hit;
+	    browser_scroll(b, list, b->total_items);
+	  }
+
+	  if (ret_action != NULL)
+	    *ret_action = want;
+
+	  return b->cur_pos;
+	}
+      }
 
       if (input == kt_dir_up ||
 	  input == kt_joy_n

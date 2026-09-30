@@ -50,6 +50,8 @@
 #include "dwiminv.h"
 #include "craft.h"
 #include "explore.h"
+#include "cmdmenu.h"
+#include "fov.h"
 
 
 /*
@@ -134,10 +136,41 @@ void player_control(creature_t * creature)
     if (explore_mode != EXPLORE_OFF)
       input = explore_step(creature);
 
+    /* RVIP: reopen the inventory after an item action, unless a
+       creature is in view. */
+    if (input == action_undefined && inv_reopen)
+    {
+      inv_reopen = 0;
+
+      if (can_see_anyone() == false)
+	input = action_inventory;
+    }
+
     if (input == action_undefined)
     {
       last_key = get_keypress();
       input = key_to_action(last_key);
+
+      /* RVIP: Enter opens the command menu (NumPad5 still does what
+	 I mean). The chosen key runs as if it had been pressed. */
+      if (last_key == '\n' || last_key == '\r')
+      {
+	action_t chosen = action_undefined;
+	int k = command_menu(&chosen);
+
+	draw_level();
+
+	if (k < 0)
+	  continue;
+
+	if (k > 0)
+	{
+	  last_key = k;
+	  input = key_to_action(k);
+	}
+	else
+	  input = chosen;
+      }
     }
 
     clear_msgbar();

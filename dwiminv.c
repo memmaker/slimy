@@ -18,6 +18,7 @@
 #include "find.h"
 #include "stacks.h"
 #include "craft.h"
+#include "cmdmenu.h"
 
 #ifdef TSL_CONSOLE
 #include "glyph.h"
@@ -314,6 +315,7 @@ int dwim_inventory(creature_t * creature, blean_t (* criteria) (const item_t *),
   item_t * t2;
   menu_item_t ** second_list;
   blean_t turn_spent;
+  blean_t closed;
   int action;
   browser_t * b;
   int selection;
@@ -322,6 +324,7 @@ int dwim_inventory(creature_t * creature, blean_t (* criteria) (const item_t *),
     return 0;
 
   turn_spent = false;
+  closed = false;
   b = &browser[MENU_USE];
 
   total_items = count_inventory(creature, criteria);
@@ -357,7 +360,10 @@ int dwim_inventory(creature_t * creature, blean_t (* criteria) (const item_t *),
     selection = browse(second_list, count, MENU_USE, NULL, &action);
 
     if (selection == -1)
+    {
+      closed = true;
       goto cleanup;
+    }
     
     if (action == action_select)
     {
@@ -494,6 +500,10 @@ int dwim_inventory(creature_t * creature, blean_t (* criteria) (const item_t *),
 cleanup:
   del_menu(second_list, count);
   free(list);
+
+  /* RVIP: an item action that took a turn reopens the list next turn. */
+  if (turn_spent && closed == false)
+    inv_reopen = 1;
 
   if (turn_spent)
     return 1;

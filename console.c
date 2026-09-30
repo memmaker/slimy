@@ -110,6 +110,12 @@ key_token_t get_keypress()
 
   inp = getch();
 
+#ifdef __EMSCRIPTEN__
+  /* RVIP: the web page sends numpad digits as 0x1000 + digit. */
+  if (inp >= 0x1000 && inp <= 0x1009)
+    return kt_np0 + (inp - 0x1000);
+#endif
+
   switch (inp)
   {
     case 27:   return kt_escape;

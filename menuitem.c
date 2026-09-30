@@ -158,12 +158,12 @@ void menu_item_add_explanation(menu_item_t * m)
   if (m == NULL || m->item == NULL)
     return;
 
-  key_help(tmp, false, action_select);
-
+  /* RVIP: Enter opens the item menu; the letter (or +) does the
+     default action. */
   free(m->explanation);
 
-  strcat(tmp, " to ");
-  strcat(tmp, get_default_verb(m->item));
+  snprintf(tmp, sizeof(tmp), "%c to %s, Enter: menu",
+	   m->letter, get_default_verb(m->item));
   m->explanation = mydup(tmp);
   
   return;

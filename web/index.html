@@ -41,6 +41,8 @@ var keyMap = { ArrowUp:259, ArrowDown:258, ArrowLeft:260, ArrowRight:261,
   Escape:27, Enter:10, Backspace:8, Tab:9 };
 document.addEventListener('keydown', function (e) {
   var k = keyMap[e.key];
+  /* Numpad digits (any NumLock state) as their own codes, 0x1000 + digit. */
+  if (/^Numpad[0-9]$/.test(e.code)) k = 0x1000 + (e.code.charCodeAt(6) - 48);
   if (k === undefined && e.key.length === 1) {
     k = e.key.charCodeAt(0);
     if (e.ctrlKey) k &= 0x1f;

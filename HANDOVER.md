@@ -1,7 +1,58 @@
 # The Slimy Lichmummy — handover
 
 ## RVIP progress
-- Stage done: 2 (explore + stairs + no `--More--`). Next: stage 3 (enter menu + inventory).
+- Stage done: 3 (Enter menu + inventory). Next: stage 4 (tiles).
+- Stage 2 re-check (stage-3 agent, final build + local immortal copy): `>`
+  walk stops on the stair, second press descends; on the new level `<` walks
+  back to the arrival stair (one step per press while "You are bleeding!"
+  stops it), stops "Here is a stair leading to the Dungeon.", second press
+  climbs. Birth: TSL has no character creation (straight into the dungeon,
+  no `--More--`, screen pane empty). No code change needed.
+- Stage 3: Enter command menu = `cmdmenu.c`/`cmdmenu.h` (`command_menu()`;
+  added to both build scripts). Table `cmd_table[]` grouped as help.c's key
+  reference (Actions, Items, Missiles, Abilities, Game); no movement or
+  fire-in-direction entries; `<`/`>` walks listed as own rows. Keys by reverse
+  lookup in `keymap[action][]` (printable first, Enter skipped) so the
+  current keymap shows. Drawn on stdscr (pane 3) at 0,0 with a box sized to
+  the longest row/title; scrolls (`^`/`v` marks) when taller than `LINES-2`.
+  Arrows/NumPad8/2 move, Enter/NumPad5 choose, a command's own key chooses,
+  Esc/Space/./NumPad0 close. Returns the key; `player_control()` (player.c)
+  sets `last_key` + `key_to_action()` so stairs direction and every prompt
+  work as typed (unbound action: returned action used directly). Enter
+  (`'\n'`, was `action_select` = do-what-I-mean) now opens the menu at the
+  main prompt; NumPad5 keeps do-what-I-mean (also a menu row).
+- Inventory: TSL already had a cursor browser (`browse()` in browser.c, list
+  drawn in the status pane via `st_*`) and an item submenu
+  (`browser_item_submenu()` in dwiminv.c, formerly Tab). Added in `browse()`
+  for `MENU_USE` (`i`): letter = main action (`dwim_item`, via
+  `action_select`), Shift+letter = drop, Ctrl+letter = cursor to it
+  (description = examine), Enter/Space/NumPad5 = item menu (`action_flip`),
+  `+` main, `-` drop, `*` nothing (examine is always shown), `.`/NumPad0
+  close. All lists: NumPad8/2 move. Item submenu (`MENU_GENERIC`): NumPad4
+  back, NumPad6 choose. Hint row now "<letter> to <verb>, Enter: menu"
+  (`menu_item_add_explanation`, menuitem.c), hidden in item prompts
+  (`MENU_PICK`). Reopen: `dwim_inventory()` sets `inv_reopen` when an item
+  action that took a turn closed the list; `player_control()` reopens it next
+  turn unless `can_see_anyone()`.
+- Item prompts ("What do you want to equip?"): TSL's `dwim_select()` already
+  shows the same browser with a cursor (arrows/NumPad move, Enter/NumPad5
+  choose, letters move the cursor as before). No inventory/equipment/floor
+  switch: TSL lists equipped items in the same list; floor pickup is its own
+  browser (`MENU_PICKUP`). No `@`-tags in TSL.
+- Numpad: `web/index.html` sends `Numpad0-9` (by `e.code`, any NumLock) as
+  0x1000+digit; `get_keypress()` (console.c, `__EMSCRIPTEN__`) maps them to
+  `kt_np0..9`. Before, numpad digits arrived as `1`..`0` = ability shortcuts.
+- Tested (Playwright, final build): menu shows/scrolls, Esc closes, arrows +
+  Enter run `use item`, `x` from the menu explores, `i` from the menu; `i` then
+  Enter = item menu (Put away/Drop/Eat/Label), NumPad2+5 = menu of item b,
+  `b` = main action (put ammo away), `B` = drop (How many?), `C` = drop torch,
+  `e` prompt with cursor, ArrowDown+Enter chooses. No page errors. Native
+  gcc console build compiles (needs `-fcommon`, as before).
+- Open (stage 3): the inventory browser is the game's own status-pane view
+  (fixed 38 columns), not a floating window sized to content — stage 5 pane
+  layout decides; cursor rows show only as reverse video (not in the text
+  shadow). Reopen after a turn-taking item action not exercised in a test
+  (no consumable in the starting kit). Mouse: none (curses shim).
 - Stage 2: explore key `x` (`action_explore`, bound in `common_keys()` so both
   keymaps have it; config name `explore`; help page 1 "auto-explore" + page 2
   text). Code: `explore.c`/`explore.h` (added to `build_console.sh` and
