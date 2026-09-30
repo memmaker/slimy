@@ -152,6 +152,9 @@ blean_t eat(creature_t * creature, item_t * item)
     return false;
   }
 
+  if (is_player(creature))
+    RVIP_SOUND("eat");
+
   if (item->inventory == creature)
   {
     detach_item(item);

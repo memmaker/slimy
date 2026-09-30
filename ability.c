@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include "main.h"
 #include <string.h>
 #include <ctype.h>
 
@@ -329,6 +330,9 @@ blean_t invoke_ability(creature_t * user, const attr_index_t ability, item_t * s
 
   res = attr_info[ability]->invoke(user, source, 0);
   
+  if (res == true && is_player(user))
+    RVIP_SOUND("spell");
+
   if (source == NULL && res == true)
   {
     spend_ep(user, cost);

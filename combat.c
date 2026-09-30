@@ -576,6 +576,11 @@ void melee_hit(creature_t * attacker,
   damage_to_deal = damage_armor(defender, damage_to_deal, damage_type);
   damage(defender, damage_to_deal);
 
+  if (is_player(attacker))
+    RVIP_SOUND("hit");
+  else if (is_player(defender))
+    RVIP_SOUND("hurt");
+
 //  if (display_msg)
   add_anim(anim_type_damage, defender->uid, damage_to_deal, defender->y, defender->x);
 

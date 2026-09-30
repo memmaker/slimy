@@ -62,6 +62,9 @@ blean_t read_scroll(creature_t * creature, item_t * item)
   if (creature == NULL || item == NULL || cannot_read(creature))
     return false;
 
+  if (is_player(creature))
+    RVIP_SOUND("read");
+
   /* Take the scroll out of the inventory */
   temp = detach_item(get_item_from_stack(item));
   
@@ -98,6 +101,9 @@ blean_t read_book(creature_t * creature, item_t * item)
 
   if (creature == NULL || item == NULL || cannot_read(creature))
     return false;
+
+  if (is_player(creature))
+    RVIP_SOUND("read");
   
   ability = item->custom[BOOK_ABILITY];
   

@@ -373,6 +373,9 @@ void drop_item(creature_t * owner, item_t * item, const blean_t silent)
 
   new_y = owner->y;
   new_x = owner->x;
+
+  if (is_player(owner) && !silent)
+    RVIP_SOUND("drop");
   
   if (NULL == level)
   {
@@ -1168,6 +1171,9 @@ blean_t pickup(creature_t * creature, item_t * item, const blean_t first_item)
     }
   }
 
+  if (is_player(creature))
+    RVIP_SOUND("pickup");
+
   return true;
 } /* pickup */
 
@@ -1209,6 +1215,7 @@ blean_t stairs(creature_t * creature, const blean_t message)
     return false;
   }
 
+  RVIP_SOUND("stairs");
   queue_msg("You climb...");
   
   map_erase();

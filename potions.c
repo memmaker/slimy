@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include "main.h"
 
 #include "potions.h"
 #include "stuff.h"
@@ -32,6 +33,9 @@ blean_t drink_potion(creature_t * creature, item_t * item)
 
   if (creature == NULL || item == NULL || attr_current(creature, attr_p_drink))
     return false;
+
+  if (is_player(creature))
+    RVIP_SOUND("quaff");
   
   temp = detach_item(get_item_from_stack(item));
 

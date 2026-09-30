@@ -1,7 +1,34 @@
 # The Slimy Lichmummy — handover
 
 ## RVIP progress
-- Stage done: 5 (web page and windows). Next: stage 6 (docs and sound).
+- Stage done: 6 (docs and sound). Next: stage 7 (publish). Stage 7/8 public
+  steps (deploy, index card, shrine) are for the Mac session, and publishing
+  at all needs the user's decision (licence: contact the author first).
+- Stage 6: Help = `web/make-help.py` -> `dist/help.html` (self-contained,
+  shaped like a Docs GAMES/GUIDES entry; on the Mac move it into
+  build-docs.py/guides.py). Content: README.md + help.c pages in own words;
+  keys from keymap.c (`common_keys` + `default_keymap`, QWERTY) plus the port's
+  x, `<`/`>` walk, Enter menu, inventory letter/Shift/Enter; saving written
+  for the web (one save, deleted on load). 49 rows in the full list.
+  Sound: `RVIP_SOUND(e)` in main.h (no-op off the web) -> `web_sound`
+  (port/wcurses.c) -> `Module.rvipSound` -> `RVIPSound.play`. Events (player
+  only): hit, hurt (melee_hit), kill (creature_death), shoot (fire_missile),
+  pickup, drop, stairs, eat (after the edible check), quaff, read (scroll +
+  book), wear (equip_item), spell (invoke_ability success), teleport, death
+  (check_for_player_death). `web/mksounds.py` synthesizes one wav per event
+  (asserted against the C). Off by default; sounds.json fetched only when on
+  (or at load if saved on). No music; the Music checkbox was removed.
+  Sound search (2026-09): TSL upstream has no audio; a third-party Go port
+  (github.com/c0ze/tsl-go, tsl.coze.org) has its own music/sfx, licence not
+  checked, not used.
+- Tested (Playwright): help opens, Esc closes; sound off by default, nothing
+  fetched; after a real click: drop/pickup/wear/eat play per action, "can't
+  eat that" silent; kept on over reload. Death path in the browser (local
+  build with health forced to 1, scratch, not committed): hurt + death
+  sounds, `web_end` -> "Game over. Starting a new game…" -> reload, no page
+  errors. Open: stairs/spell/teleport/kill/shoot sounds not exercised in a
+  test; auto-equip plays wear twice (weapon + ammo); real look/listen in the
+  Mac pane still required.
 - Stage 5: **ready to deploy** (cloud cannot deploy; `web/dist` built and
   tested headless). Live URL once deployed: https://ruzzoli.de/roguelikes/slimy/
   (needs `web/deploy.sh` from the Mac; publishing needs the user's decision,

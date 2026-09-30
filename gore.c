@@ -28,6 +28,9 @@ void creature_death(creature_t * vic,
   gore_t attack_type;
 /*  blean_t seen;*/
 
+  if (killer != NULL && is_player(killer) && vic != killer)
+    RVIP_SOUND("kill");
+
   /* RFE: This function is a mess. */
 
   if (is_player(killer) && is_blinded(killer))

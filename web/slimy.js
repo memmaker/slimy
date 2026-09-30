@@ -15,13 +15,13 @@
 
 	/* ---------- settings: one file in the game's IDBFS folder (no localStorage) ---------- */
 	function loadLayout() {
-		var d = { tiles: 'Tiles', face: '', mapFace: '', audio: { sound: false, music: false }, wm: null };
+		var d = { tiles: 'Tiles', face: '', mapFace: '', audio: { sound: false }, wm: null };
 		try {
 			var s = JSON.parse(Module.FS.readFile(LAYOUT, { encoding: 'utf8' }));
 			if (s.tiles === 'Tiles' || s.tiles === 'None') d.tiles = s.tiles;
 			if (typeof s.face === 'string') d.face = s.face;
 			if (typeof s.mapFace === 'string') d.mapFace = s.mapFace;
-			if (s.audio) d.audio = { sound: s.audio.sound === true, music: s.audio.music === true };
+			if (s.audio) d.audio = { sound: s.audio.sound === true };
 			if (s.wm) d.wm = s.wm;
 		} catch (e) { /* nothing saved yet */ }
 		L = d;
@@ -155,6 +155,29 @@
 		renderMapSel();
 	}
 
+	/* ---------- sound ---------- */
+	/* events come from game actions (RVIP_SOUND in the C code -> web_sound ->
+	 * Module.rvipSound); web/mksounds.py synthesizes one wav per event,
+	 * rvip-sound.js plays them. Off by default; nothing is fetched until
+	 * Sound effects is on. TSL has no music. */
+	var audio = { cfg: null, loading: false, played: 0 };
+	window.slimyAudio = function () { return audio; };
+	function sound(name) {
+		if (!L || !L.audio.sound) return;
+		if (!audio.cfg) {
+			if (!audio.loading) {
+				audio.loading = true;
+				fetch('sound/sounds.json').then(function (r) { return r.json(); })
+					.then(function (c) { audio.cfg = c; }).catch(function () { audio.loading = false; });
+			}
+			return;
+		}
+		var f = audio.cfg[name];
+		if (!f || !f.length || !window.RVIPSound) return;
+		audio.played++;
+		RVIPSound.play([f[0]], 0.6);
+	}
+
 	/* ---------- saves (IDBFS at RvipApp.dir = $HOME of the game) ---------- */
 	function hasSave() { try { Module.FS.stat(SAVE); return true; } catch (e) { return false; } }
 	app = RvipApp({
@@ -194,6 +217,7 @@
 		printErr: function (s) { console.warn(s); },
 		setStatus: function (s) { if (s && !app.running) status(s.replace(/\(\d+\/\d+\)/, '').trim() || 'Loading…'); },
 		onAbort: function (what) { app.crashed(what); },
+		rvipSound: function (e) { sound(e); },
 		rvipSync: function () { return new Promise(function (r) { app.sync(function () { r(); }); }); },
 		rvipEnd: function () {                /* death or save-and-quit: persist, then a new game */
 			app.running = false;
@@ -235,9 +259,7 @@
 		$('btn-tiles').onclick = toggleTiles;
 		RvipWM.dropdown($('btn-audio'), $('menu-audio'));
 		RvipWM.dropdown($('btn-file'), $('menu-file'));
-		[['chk-sound', 'sound'], ['chk-music', 'music']].forEach(function (a) {
-			$(a[0]).onchange = function () { if (!L) return; L.audio[a[1]] = this.checked; saveLayout(); };
-		});
+		$('chk-sound').onchange = function () { if (!L) return; L.audio.sound = this.checked; if (this.checked) sound(''); saveLayout(); };
 		RvipWM.fonts.then(function () {
 			[[$('sel-font'), 'face'], [mapSel, 'mapFace']].forEach(function (a) { RvipWM.fontOptions(a[0]); a[0].value = (L && L[a[1]]) || ''; });
 		}).catch(function () { });
@@ -246,6 +268,6 @@
 		});
 		document.querySelectorAll('button').forEach(function (b) { b.addEventListener('mousedown', function (e) { e.preventDefault(); }); });
 	});
-	/* the audio checkboxes reflect the saved choice (sound itself: stage 6) */
-	var chk = setInterval(function () { if (L) { $('chk-sound').checked = L.audio.sound; $('chk-music').checked = L.audio.music; clearInterval(chk); } }, 100);
+	/* the checkbox reflects the saved choice; if saved on, load sounds.json now */
+	var chk = setInterval(function () { if (L) { $('chk-sound').checked = L.audio.sound; if (L.audio.sound) sound(''); clearInterval(chk); } }, 100);
 })();

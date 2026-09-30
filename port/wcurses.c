@@ -188,6 +188,10 @@ EM_ASYNC_JS(void, web_end_js, (void), {
   await new Promise(function () {});   /* the page reloads */
 });
 void web_end(void) { web_end_js(); }
+/* RVIP: sound event from a game action (RVIP_SOUND, main.h); the page plays it */
+EM_JS(void, web_sound, (const char * e), {
+  if (Module.rvipSound) Module.rvipSound(UTF8ToString(e));
+});
 #else
 static void js_map(const int * t, const unsigned int * c, int h, int w, int hy, int hx)
 { (void)t; (void)c; (void)h; (void)w; (void)hy; (void)hx; }

@@ -20,3 +20,6 @@
 - 5.9: per-window A−/A+ for a tile map with integer zoom: read the WM size as a step (TSL: scale = size-15, `fontMax.map` 19) so the text-mode map uses the same size as its font (TSL).
 - 5.9: the game page's own CSS must not hide the File/Audio menu elements (`display:none`): `RvipWM.dropdown` toggles `hidden` and the smoke test reports NOOPEN (TSL).
 - 5.8: same-sheet stand-ins by a C `{gent, stand-in}` table in the tile hook; take names from the preprocessed enum (`gcc -E`), several names in the header were commented out (TSL).
+- 5.11: hook a "consume" sound after the game's own can/can't check, not at function entry (TSL `eat()` refuses non-food at the end of its type chain; the first hook played on "You can't eat that!") (TSL).
+- 5.16: death test in a scratch copy: one line setting health to 1 at the top of the player's turn plus explore keys reaches a real death in ~a minute; check hurt+death sounds and the web_end reload together (TSL).
+- 5.11: a web search for game sounds can surface third-party ports with their own audio (TSL: c0ze/tsl-go); not upstream and licence unknown, so synthesize instead and note it (TSL).

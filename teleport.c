@@ -43,6 +43,9 @@ blean_t teleport_creature(creature_t * creature, const unsigned int target_y, co
   whos_there = find_creature(level, target_y, target_x);
   reveal_mimic(whos_there);
   
+  if (is_player(creature))
+    RVIP_SOUND("teleport");
+
   /* Move the target & update map */
   set_creature_coordinates(creature, target_y, target_x);
 

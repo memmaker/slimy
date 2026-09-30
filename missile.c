@@ -163,6 +163,7 @@ void fire_missile(creature_t * creature, dir_t dir,
   /* Display who did what... */
   if (is_player(creature))
   {
+    RVIP_SOUND("shoot");
     sprintf(line, "You %s %s!", verb, missile_name);
     upperfirst(line);
     queue_msg(line);

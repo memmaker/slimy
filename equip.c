@@ -47,6 +47,9 @@ blean_t equip_item(item_t * item)
   /* Is it already equipped? */
   if (item->equipped)
     return false; /* It is... */
+
+  if (player)
+    RVIP_SOUND("wear");
   
   /*
     If we're equipping ammo, remove any launcher present if it isn't

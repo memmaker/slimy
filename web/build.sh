@@ -14,3 +14,5 @@ emcc -O2 -fcommon -std=gnu99 -DTSL_CONSOLE -DRVIP_AUTO_MORE -Iport \
   -o web/dist/slimy-core.js "$@"
 cp web/index.html web/slimy.js web/dist/
 cp tileset.png tiledim.png tilerev.png web/dist/
+python3 web/mksounds.py web/dist/sound
+python3 web/make-help.py web/dist/help.html

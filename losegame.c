@@ -31,6 +31,7 @@ void check_for_player_death(const char * reason)
   if (killed(game->player) ||
       (game->game_over))
   {
+    RVIP_SOUND("death");
     game->died = time(NULL);
     game->game_over = true;
 

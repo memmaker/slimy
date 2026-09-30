@@ -457,4 +457,13 @@ void init_static(void);
 void del_static(void);
 void shutdown_everything(void);
 
+/* RVIP: sound events at game actions (web build only; the page plays
+   sound/<event>.wav, web/mksounds.py makes one per RVIP_SOUND name). */
+#ifdef __EMSCRIPTEN__
+void web_sound(const char * event);
+#define RVIP_SOUND(e) web_sound(e)
+#else
+#define RVIP_SOUND(e) ((void)0)
+#endif
+
 #endif
