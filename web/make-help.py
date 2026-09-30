@@ -156,16 +156,18 @@ a Mac) for themselves.</li>
 VERSION = '''<ul>
 <li>Based on <strong>The Slimy Lichmummy 0.40</strong> by Ulf Åström
 (<a href="http://happyponyland.net/">happyponyland.net</a>), from the source kept at
-<a href="https://gitlab.com/vitaly-zdanevich/the-slimy-lichmummy">gitlab.com/vitaly-zdanevich/the-slimy-lichmummy</a>.
+<a href="https://gitlab.com/vitaly-zdanevich/the-slimy-lichmummy/-/tree/6f885be8f3f5ad640b3fc711ea5e4e56189c06e8">vitaly-zdanevich/the-slimy-lichmummy @ 6f885be</a>;
+this port: <a href="https://github.com/memmaker/slimy">memmaker/slimy</a>
+(<a href="https://github.com/memmaker/slimy/compare/6f885be...main">all changes</a>).
 Tiles and fonts are the game's own (fonts: modified Terminus, SIL OFL).</li>
 <li>The second tile set is from <a href="https://github.com/c0ze/tsl-go">c0ze/tsl-go</a>
 by c0ze (tsl.coze.org): tiles from the Dungeon Crawl Stone Soup tileset (CC0; thanks to
 the Crawl and Crawl Stone Soup teams, Eino Keskitalo, David Lawrence Ramsey, Enne Walker,
-Poor_Yurik, Stefan O'Rear and the original RLTiles) plus sprites made for tsl-go. Sound effects (hit, hurt, death, pickup, eat, quaff,
+Poor_Yurik, Stefan O'Rear and the original RLTiles) plus sprites made for tsl-go, used with permission. Sound effects (hit, hurt, death, pickup, eat, quaff,
 read, wear, stairs, spell) and the level music are tsl-go's too.</li>
 <li>TSL is not free software: its licence allows redistributing the unmodified
-source and asks that unofficial ports contact the author. Sound effects were
-synthesized for this port. Built with Emscripten.</li>
+source and asks that unofficial ports contact the author, which was done. The other
+sound effects were synthesized for this port. Built with Emscripten.</li>
 </ul>'''
 
 
