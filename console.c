@@ -320,20 +320,26 @@ void map_put(const unsigned int y, const unsigned int x, const gent_t gent, cons
   /* RVIP tiles (rule 7): C picks the sprite as allui.c does: the gent's
      tile over the level's floor tile; dim/sleep -> tiledim, reverse -> tilerev. */
   {
-    /* slots empty in tileset.png (measured, see HANDOVER): text glyph */
-    static const gent_t no_tile[] = {
-      gent_amulet, gent_beetle_shell, gent_bone_dust, gent_caeltzan,
-      gent_chickpeas, gent_cranium, gent_eyeball, gent_falafel, gent_fish,
-      gent_lognac, gent_mandrake_root, gent_meat, gent_mummy_wrapping,
-      gent_prod, gent_sausage, gent_ybznek };
-    unsigned int k, has = 1;
+    /* RVIP stand-ins: gents with an empty slot in tileset.png get a
+       sprite from the same sheet (never text, never another set) */
+    static const gent_t stand_in[][2] = {
+      { gent_amulet, gent_crown }, { gent_beetle_shell, gent_carcass },
+      { gent_bone_dust, gent_bone }, { gent_caeltzan, gent_necromancer },
+      { gent_chickpeas, gent_bread }, { gent_cranium, gent_decapitated_head },
+      { gent_eyeball, gent_floating_brain }, { gent_falafel, gent_bread },
+      { gent_fish, gent_carcass }, { gent_lognac, gent_goatman },
+      { gent_mandrake_root, gent_mushroom }, { gent_meat, gent_carcass },
+      { gent_mummy_wrapping, gent_robe }, { gent_prod, gent_staff },
+      { gent_sausage, gent_cheese }, { gent_ybznek, gent_nameless_horror } };
+    unsigned int k;
+    gent_t tg = gent;
     unsigned int under = gent_floor + game->player->location->floor_type;
-    unsigned int top = (gent == gent_floor) ? under : (unsigned int)gent;
+    unsigned int top;
     unsigned int sheet = (attr & MAP_REVERSE) ? 2 : ((attr & (MAP_DIM | MAP_SLEEP)) ? 1 : 0);
-    for (k = 0; k < sizeof(no_tile) / sizeof(no_tile[0]); k++)
-      if (no_tile[k] == gent) has = 0;
-    if (has)
-      web_map_tile(y, x, (int)(top | (under << 10) | (sheet << 20)));
+    for (k = 0; k < sizeof(stand_in) / sizeof(stand_in[0]); k++)
+      if (stand_in[k][0] == gent) tg = stand_in[k][1];
+    top = (tg == gent_floor) ? under : (unsigned int)tg;
+    web_map_tile(y, x, (int)(top | (under << 10) | (sheet << 20)));
   }
 #endif
 
