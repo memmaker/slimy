@@ -1,5 +1,9 @@
 #include <stdlib.h>
 #include <stdio.h>
+#ifdef __EMSCRIPTEN__
+extern void web_sync(void);
+extern void web_end(void);
+#endif
 #include <string.h>
 
 #include "main.h"
@@ -44,6 +48,9 @@ void check_for_player_death(const char * reason)
 
     free(death_message);
 
+#ifdef __EMSCRIPTEN__
+    web_end();
+#endif
     exit(0);
   }
   

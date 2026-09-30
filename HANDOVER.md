@@ -1,7 +1,49 @@
 # The Slimy Lichmummy — handover
 
 ## RVIP progress
-- Stage done: 4 (tiles). Next: stage 5 (web page and windows).
+- Stage done: 5 (web page and windows). Next: stage 6 (docs and sound).
+- Stage 5: **ready to deploy** (cloud cannot deploy; `web/dist` built and
+  tested headless). Live URL once deployed: https://ruzzoli.de/roguelikes/slimy/
+  (needs `web/deploy.sh` from the Mac; publishing needs the user's decision,
+  licence). Page = `web/index.html` + `web/slimy.js` (page code), emcc output
+  renamed `slimy-core.js` (RvipApp crash tag); loads `../rvip-{wm,app}.js`.
+  Windows (rvip-wm): Map (canvas tiles or `<pre>` text), Messages (message
+  bar), Status (status pane, also holds TSL's inventory browser); stdscr
+  (command menu, help, item menus, game over) = `#pop` via `RvipWM.popup`,
+  text size = Messages'. A−/A+ per window kept by the WM; the Map's size is
+  its text font, tiles step in whole multiples: scale = fs-15 (16 = 1x ..
+  19 = 4x, `fontMax.map` 19). Camera: C sends the hero's board cell
+  (`web_map_hero` from `draw_level`, ui.c) with every map flush;
+  `RvipWM.center`. TSL itself scrolls its 40x20 view.
+  Saves/settings: IDBFS at `RvipApp.dir` (`/slimy`), `ENV.HOME` = it, so
+  `TSL-SAVE` and `.tsl_conf` land there; page settings in
+  `/slimy/web-layout.json` (wm state, tiles by name 'Tiles'/'None', fonts,
+  audio). No localStorage left. Save atomic (`TSL-SAVE.tmp` + rename,
+  saveload.c). Save-and-quit (S) and death call `web_end()` (EM_ASYNC_JS:
+  sync, reload = next game / restored save); loading the save deletes it
+  (TSL rule) and `web_sync()` persists that. Sync every 15 s, on hide, pagehide.
+- Stand-ins (separate commit): the 16 empty-slot gents now draw a same-sheet
+  sprite (amulet->crown, beetle_shell/fish/meat->carcass, bone_dust->bone,
+  caeltzan->necromancer, chickpeas/falafel->bread, cranium->decapitated_head,
+  eyeball->floating_brain, lognac->goatman, mandrake_root->mushroom,
+  mummy_wrapping->robe, prod->staff, sausage->cheese, ybznek->nameless_horror):
+  150/150 drawn gents tiled (100%).
+- Tested (Playwright, scratch www with symlinks to dist + rvip js + fonts):
+  shared smoke (bar order, File/Audio drop-downs, A+ on Messages only, kept
+  over reload, tiles switch, IDB names `/slimy` only), idbtest (tiles None
+  survives reload, file in IDBFS, localStorage 0), resize (1280..420 px, every
+  divider to both ends, font sizes fixed, windows scroll, no negative sizes),
+  Enter menu pop-up, `i`, `x`, map zoom 2x follows the hero, S saves -> reload
+  -> "welcome back" -> save removed; no page errors.
+- Open (stage 5): no separate Inventory/Visible windows (TSL shows the
+  inventory in its status pane; a Visible list needs a C hook); Messages is
+  TSL's 2-line message bar, no history log, no `RvipWM.prompt`; one-window
+  mode = same windows without title bars, not a scaled full-screen canvas; no
+  autosave before descending (TSL saves only as save-and-quit and deletes the
+  save on load, so a crash loses the run); death path `web_end` untested in
+  the browser (same hook as save); Help loads `help.html` which stage 6 makes;
+  audio checkboxes persist but play nothing (stage 6). Real look in the Mac
+  pane still required.
 - Stage 4: one set = the game's own `tileset.png` (+ `tiledim.png` for
   MAP_DIM/MAP_SLEEP, `tilerev.png` for MAP_REVERSE), 337x833, shipped at
   original size (copied by `web/build.sh` into `web/dist/`). Slot of gent g:
@@ -28,9 +70,8 @@
 - Tested: tiles show (walls, floor, water, @, ratman, electric snake), 60+
   tile cells, toggle to None hides canvas, None survives reload, back on
   works, no page errors.
-- Open (stage 4): coverage < 95% (RVIP bar) but it is the game's own set and
-  gaps fall back to text; no same-set stand-ins picked. Pref in localStorage,
-  not IndexedDB (move to IDBFS with saves in stage 5/9). Tiles only 1x (800
+- Open (stage 4, fixed in stage 5): coverage now 100% with stand-ins; pref
+  moved from localStorage to IDBFS. Tiles only 1x (800
   px map); stage 5 decides zoom. Explore/animation frames (allui anim.c
   effects) not ported; the text shadow `slimyShadow.map` still holds the
   text map.

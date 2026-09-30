@@ -16,3 +16,7 @@
 - 5.8: a game whose own enum indexes its sheet (TSL `gent_t`, slot = gent%16/gent/16) needs no mapping script: C sends the gent (+ floor under it, + dim/rev sheet) per cell; measure coverage by pixel-checking every enum slot in the browser (no PIL in the cloud), preprocess the header (`gcc -E`) to get real enum values — commented-out entries and explicit `= N` break a grep (TSL).
 - 5.8: pack tile codes with enough bits: TSL gents run past 255, an 8-bit field silently drew wrong sprites (TSL).
 - 5.8: the original GUI drew empty-slot gents as bare floor (items invisible); send those as text glyphs instead (TSL).
+- 5.10: a game that finds its save and config through `$HOME` (TSL `get_file_path`) needs only `ENV.HOME = RvipApp.dir` in the mount callback; save-and-quit/death paths that `exit(0)` get an `EM_ASYNC_JS` hook that awaits the sync and never returns (page reloads) (TSL).
+- 5.9: per-window A−/A+ for a tile map with integer zoom: read the WM size as a step (TSL: scale = size-15, `fontMax.map` 19) so the text-mode map uses the same size as its font (TSL).
+- 5.9: the game page's own CSS must not hide the File/Audio menu elements (`display:none`): `RvipWM.dropdown` toggles `hidden` and the smoke test reports NOOPEN (TSL).
+- 5.8: same-sheet stand-ins by a C `{gent, stand-in}` table in the tile hook; take names from the preprocessed enum (`gcc -E`), several names in the header were commented out (TSL).

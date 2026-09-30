@@ -212,6 +212,14 @@ void draw_level()
     }
   } /* for i */
 
+#ifdef __EMSCRIPTEN__
+  {
+    extern void web_map_hero(int y, int x);
+  /* RVIP camera: the hero's board cell (the page centres a zoomed map on it) */
+  web_map_hero(game->player->y - view_top, game->player->x - view_left);
+  }
+#endif
+
   map_flush();
 
   return;

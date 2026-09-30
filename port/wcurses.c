@@ -172,14 +172,27 @@ void web_map_tile(int y, int x, int code)
   tile_cell[i] = board_win->cells[i];
 }
 
+static int hero_y = -1, hero_x = -1;
+void web_map_hero(int y, int x) { hero_y = y; hero_x = x; }
+
 #ifdef __EMSCRIPTEN__
-EM_JS(void, js_map, (const int * tiles, const unsigned int * cells, int h, int w), {
+EM_JS(void, js_map, (const int * tiles, const unsigned int * cells, int h, int w, int hy, int hx), {
   if (Module.rvipMap) Module.rvipMap(new Int32Array(HEAPU8.buffer, tiles, h * w),
-                                     new Uint32Array(HEAPU8.buffer, cells, h * w), h, w);
+                                     new Uint32Array(HEAPU8.buffer, cells, h * w), h, w, hy, hx);
 });
+EM_ASYNC_JS(void, web_sync, (void), {
+  if (Module.rvipSync) await Module.rvipSync();
+});
+EM_ASYNC_JS(void, web_end_js, (void), {
+  if (Module.rvipEnd) await Module.rvipEnd();
+  await new Promise(function () {});   /* the page reloads */
+});
+void web_end(void) { web_end_js(); }
 #else
-static void js_map(const int * t, const unsigned int * c, int h, int w)
-{ (void)t; (void)c; (void)h; (void)w; }
+static void js_map(const int * t, const unsigned int * c, int h, int w, int hy, int hx)
+{ (void)t; (void)c; (void)h; (void)w; (void)hy; (void)hx; }
+void web_sync(void) { }
+void web_end(void) { }
 #endif
 
 static void send_map_tiles(WINDOW * w)
@@ -188,7 +201,7 @@ static void send_map_tiles(WINDOW * w)
   if (n > TMAX) n = TMAX;
   for (i = 0; i < n; i++)
     tile_out[i] = (tile_cell[i] == w->cells[i] && (w->cells[i] & A_CHARTEXT) != ' ') ? tile_code[i] : -1;
-  js_map(tile_out, w->cells, w->h, w->w);
+  js_map(tile_out, w->cells, w->h, w->w, hero_y, hero_x);
 }
 
 /* Builds the window as HTML lines, trimmed (rule 5), and sends it. */

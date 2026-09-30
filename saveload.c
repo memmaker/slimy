@@ -7,6 +7,10 @@
 #include "ui.h"
 #include "string.h"
 #include "stuff.h"
+#ifdef __EMSCRIPTEN__
+extern void web_sync(void);
+extern void web_end(void);
+#endif
 
 
 
@@ -52,6 +56,9 @@ game_t * try_to_load_game(void)
     if (loaded_game != NULL)
     {
       delete_savefile();
+#ifdef __EMSCRIPTEN__
+      web_sync();
+#endif
     }
   }
 
@@ -100,16 +107,25 @@ void try_to_save_game()
   add_game_to_save_table(game);
 
   /* Open the savefile */
-  savefile = fopen(savefile_path, "wb");
-
-  if (savefile == NULL)
+  /* RVIP: atomic save: write <save>.tmp, rename over the old file */
   {
-    success = false;
-  }
-  else
-  {   
-    success = write_savefile(savefile);
-    fclose(savefile);
+    char * tmp_path = malloc(strlen(savefile_path) + 5);
+    if (tmp_path == NULL) out_of_memory();
+    sprintf(tmp_path, "%s.tmp", savefile_path);
+    savefile = fopen(tmp_path, "wb");
+
+    if (savefile == NULL)
+    {
+      success = false;
+    }
+    else
+    {   
+      success = write_savefile(savefile);
+      if (fclose(savefile) != 0) success = false;
+      if (success && rename(tmp_path, savefile_path) != 0) success = false;
+      if (!success) remove(tmp_path);
+    }
+    free(tmp_path);
   }
 
   /* We don't need this anymore. */
@@ -137,6 +153,9 @@ void try_to_save_game()
     msgflush_wait();
     
     shutdown_everything();
+#ifdef __EMSCRIPTEN__
+    web_end();
+#endif
     exit(0);
   }
 
