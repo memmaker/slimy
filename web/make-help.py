@@ -135,9 +135,10 @@ GUIDE = [
 WEB = '''<ul>
 <li>The map uses TSL's own tiles; <em>Tiles</em> in the top bar cycles TSL → tsl-go
 (the sprites of <a href="https://github.com/c0ze/tsl-go">c0ze/tsl-go</a>, a Go port of TSL)
-→ None (text). The choice is remembered. Map,
-Messages and Status are separate windows; <em>A−</em> / <em>A+</em> on a title bar change
-that window's text or tile size, <em>Windows</em> arranges them. Menus, help pages and
+→ None (text). The choice is remembered. Map, Messages, Status, Inventory, Visible
+(creatures and items in view) and Message log are separate windows; <em>A−</em> / <em>A+</em>
+on a title bar change that window's text or tile size, <em>Windows</em> arranges them or
+switches to <em>One window</em>: TSL's whole text screen as in a terminal. Menus, help pages and
 the death screen appear as text boxes over the map.</li>
 <li><strong>Added for the web:</strong> <kbd>x</kbd> auto-explore, <kbd>&lt;</kbd> / <kbd>&gt;</kbd>
 walk to the nearest known stairs, <kbd>Enter</kbd> opens a menu of every command (keypad
