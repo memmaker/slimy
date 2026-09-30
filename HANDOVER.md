@@ -24,49 +24,24 @@
     Death (health 1): `ev=death&killer=gnoblin&depth=1&turns=53`, game-over
     screen shown, Enter -> new game.
   - Lessons moved into RVIP.md part 5 (LESSONS.md removed); TSL in part 3.
-- **Open problems now:** publishing (licence: contact Ulf Åström; tsl-go
-  AI sprites + music unlicensed); stage 7/8/9 public steps below; inventory
+- **Published (2026-09-30, user approved: author contacted, tsl-go assets OK'd
+  by c0ze):** repo https://github.com/memmaker/slimy (public, `main`;
+  memmaker/slimy-cloud kept as the old private cloud repo), README port note +
+  compare view, `web/deploy.sh`; live https://ruzzoli.de/roguelikes/slimy/
+  (og tags, title -> shrine). roguelikes-index: card (+Info), tree entry (+✦),
+  years.json, img/slimy.png, shrine/slimy.html (+ README/CHANGES copies, og
+  block by hand), killers/slimy (44) + `slimy()` in killers/make.py; deployed
+  from a clean worktree (index.html had another session's uncommitted
+  Prospector edit, left alone). Shared rvip-sound.js deployed: array pick +
+  `RVIPSound.pitch()` opt-in (default 0, other games unchanged; the user
+  asked for that). Checked live: all URLs 200, shrine 375 px no overflow,
+  game starts.
+- **Open problems now:** one real death on the live site in the user's
+  browser (the pane's user agent is filtered) -> check graveyard.html;
+  RogueBasin/happyponyland year cross-check (2006) still not done; inventory
   icons (RVIP content rule) not done; the Whole screen window also shows in
   the multi-window list (harmless).
-- **Open-problems pass (2026-09-30, cloud):**
-  - Autosave (web only, saveload.c `web_autosave`): `write_save_atomic()` shared
-    with S; `player_control` saves at the idle prompt when
-    `web_autosave_pending` (set at start and in `change_level`, game.c) and no
-    key is queued (`web_keys_pending`); `web_autosave_delete()` after
-    `run_report` in death/quit and win. No timer/hide save (RVIP 5.10: only
-    level changes). Tested: save present after start and reload ("welcome
-    back"), mtime renewed on each stairs trip, removed at death (END save=0).
-  - Hero name: `web_player_name()` (EM_JS -> `Module.rvipName`) in
-    `create_character` replaces `web_user`; the page asks once at the first
-    game start (`window.prompt`, `/slimy/web-name`, blank = TSL's "player");
-    the beacon reads the same file. Tested: "Hello Tester, welcome to TSL!",
-    beacon name=Outbox from the start prompt.
-  - New rvip-wm windows **Inventory** (`#inv`, player.c
-    `web_send_inventory`: letter order, TSL in-use text, class `eq`, sent on
-    change) and **Message log** (`#log`, each message as flushed via
-    `web_log_msg` in message.c, `RvipWM.log` folds repeats). Default layout:
-    right column Status / Inventory / Message log; saved layouts without
-    `inv` fall back to it once. TSL's in-status browser untouched. No
-    `RvipWM.prompt`: TSL has its own message-bar pane (the prompt line is for
-    games that write prompts onto the map). Messages have no colour in TSL
-    (monochrome bar), so log lines carry none.
-  - Explore: a message identical to one of the last flush's texts doesn't
-    bump `msg_counter` (bleeding x4 walked on, stopped on "something new");
-    first step onto stairs/items that aren't the target is swapped for an
-    equally short plain step (`ex_side_step`, reverse BFS). Side effect: an
-    identical repeated hit message from an unseen attacker no longer stops
-    explore (seen monsters still do).
-  - Sounds: `wear` once per game turn (auto-equip weapon+ammo); `eat` moved into
-    `EAT_MSG` (before lethal effects). Tested (scratch build, hooks via
-    `Module.rvTest`): stairs, spell + teleport (Teleport ability), shoot, hit,
-    hurt, kill, eat -> death order. Inventory reopen after eating one of two
-    breads: browser reopened on the remaining bread.
-  - Shrine draft at 375 px with roguelikes `shrine.css`: no overflow, no
-    inner scrollers (screenshot OK); saving text updated. Outbox: beacon 503
-    -> kept in IndexedDB, resent after reload with 204, outbox empty.
-  - Mouse: not added (siblings Avanor/rogue3.6 have no row clicks).
-  - Shared tests smoke/idbtest/resize pass with the 5 windows, no errors.
-- **PUBLISHING BLOCKER (tsl-go assets, 2026-09-30):** the user asked to add
+- **tsl-go assets (resolved 2026-09-30: permission):** the user asked to add
   the tiles and sounds of github.com/c0ze/tsl-go (Go port of TSL, @0c62dcf).
   Licence check: the repo has no licence of its own ("The Go port is offered
   under the same terms" as TSL = not free). Tiles: `assets/tiles/dcss/` are
