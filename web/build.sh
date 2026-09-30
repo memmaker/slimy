@@ -14,3 +14,4 @@ emcc -O2 -fcommon -std=gnu99 -DTSL_CONSOLE -DRVIP_AUTO_MORE -Iport \
   -sFORCE_FILESYSTEM -lidbfs.js -sENVIRONMENT=web \
   -o web/dist/slimy.js "$@"
 cp web/index.html web/dist/index.html
+cp tileset.png tiledim.png tilerev.png web/dist/

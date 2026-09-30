@@ -1,7 +1,39 @@
 # The Slimy Lichmummy — handover
 
 ## RVIP progress
-- Stage done: 3 (Enter menu + inventory). Next: stage 4 (tiles).
+- Stage done: 4 (tiles). Next: stage 5 (web page and windows).
+- Stage 4: one set = the game's own `tileset.png` (+ `tiledim.png` for
+  MAP_DIM/MAP_SLEEP, `tilerev.png` for MAP_REVERSE), 337x833, shipped at
+  original size (copied by `web/build.sh` into `web/dist/`). Slot of gent g:
+  x = 1 + (g%16)*21, y = 161 + (g/16)*21, 20x20 (allui.c `gent_rect`).
+  C decides (rule 7): `map_put()` (console.c, `__EMSCRIPTEN__`) calls
+  `web_map_tile(y,x, top | under<<10 | sheet<<20)` — under = `gent_floor +
+  location->floor_type` (drawn first, as allui.c), top = gent (floor ->
+  under); gents exceed 255, hence 10 bits. `port/wcurses.c` keeps the code
+  plus the cell char+attr it was set with; on the board `wrefresh` it sends
+  `Module.rvipMap(tiles, cells, h, w)`, a tile only while the cell still
+  holds that char+attr (else -1 = text drawn from the cell). Canvas `#mapc`
+  is the only canvas; scale 1 (20 px cells, `SCALE` in index.html, integer
+  zoom only, `imageSmoothingEnabled=false` + pixelated). Text mode = the old
+  `<pre id="map">`. Button "Tiles: on/None" bottom right toggles; stored by
+  name ('Tiles'/'None') in localStorage `web-tiles`, read before the sheets
+  load; generation counter guards late onload.
+- Coverage (Playwright, pixel check of each enum slot): 152 gent ids,
+  18 empty slots: gent_blank (intentionally black) and gent_floor (floor
+  type 0) are fine; 16 real gaps (amulet, beetle_shell, bone_dust, caeltzan,
+  chickpeas, cranium, eyeball, falafel, fish, lognac, mandrake_root, meat,
+  mummy_wrapping, prod, sausage, ybznek) -> 136/152 = 89% tiled; the gaps go
+  out as the text glyph (C table `no_tile[]` in map_put), so nothing is
+  invisible. The original Allegro build draws them as bare floor.
+- Tested: tiles show (walls, floor, water, @, ratman, electric snake), 60+
+  tile cells, toggle to None hides canvas, None survives reload, back on
+  works, no page errors.
+- Open (stage 4): coverage < 95% (RVIP bar) but it is the game's own set and
+  gaps fall back to text; no same-set stand-ins picked. Pref in localStorage,
+  not IndexedDB (move to IDBFS with saves in stage 5/9). Tiles only 1x (800
+  px map); stage 5 decides zoom. Explore/animation frames (allui anim.c
+  effects) not ported; the text shadow `slimyShadow.map` still holds the
+  text map.
 - Stage 2 re-check (stage-3 agent, final build + local immortal copy): `>`
   walk stops on the stair, second press descends; on the new level `<` walks
   back to the arrival stair (one step per press while "You are bleeding!"

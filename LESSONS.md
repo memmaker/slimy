@@ -13,3 +13,6 @@
 - 5.7: browsers read the numpad as digits unless the page sends `e.code` Numpad keys as own codes (TSL: 0x1000+digit -> `kt_np*`); otherwise numpad 8/2/5 hit digit shortcuts (TSL).
 - 5.5: TSL's `ST_NW`..`ST_SE` corner names mean the opening side (`ST_NW` = `┘`): check a box corner in the text shadow, don't trust the name (TSL).
 - 5.17: `pkill -f "http.server"` also killed the agent's own shell (its command line contained the pattern): kill by PID (TSL).
+- 5.8: a game whose own enum indexes its sheet (TSL `gent_t`, slot = gent%16/gent/16) needs no mapping script: C sends the gent (+ floor under it, + dim/rev sheet) per cell; measure coverage by pixel-checking every enum slot in the browser (no PIL in the cloud), preprocess the header (`gcc -E`) to get real enum values — commented-out entries and explicit `= N` break a grep (TSL).
+- 5.8: pack tile codes with enough bits: TSL gents run past 255, an 8-bit field silently drew wrong sprites (TSL).
+- 5.8: the original GUI drew empty-slot gents as bare floor (items invisible); send those as text glyphs instead (TSL).

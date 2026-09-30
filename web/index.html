@@ -7,9 +7,11 @@
 <!-- Stage-1 page: plain panes, no rvip-wm yet (stage 5). -->
 <style>
 body { background:#000; color:#ccc; font:16px monospace; margin:8px; }
-#game { display:grid; grid-template-columns: 40ch 40ch; gap:0 1ch; }
+#game { display:grid; grid-template-columns: auto 40ch; gap:0 1ch; }
 pre { margin:0; line-height:1.15; white-space:pre; }
 #screen { position:absolute; top:8px; left:8px; background:#000; min-width:80ch; min-height:24em; display:none; }
+#mapc { image-rendering:pixelated; image-rendering:crisp-edges; display:block; }
+#tilesbtn { position:fixed; right:8px; bottom:8px; background:#222; color:#ccc; border:1px solid #555; font:14px monospace; }
 .rv { background:#ccc; color:#000; }
 .bd { font-weight:bold; }
 .dm, .c7 { color:#666; }
@@ -19,14 +21,77 @@ pre { margin:0; line-height:1.15; white-space:pre; }
 </head>
 <body>
 <div id="game">
-  <div><pre id="map"></pre><pre id="msg"></pre></div>
+  <div><pre id="map"></pre><canvas id="mapc" style="display:none"></canvas><pre id="msg"></pre></div>
   <pre id="status"></pre>
 </div>
 <pre id="screen"></pre>
+<button id="tilesbtn" title="Toggle tiles / text map">Tiles</button>
 <script>
 var panes = ['map', 'status', 'msg', 'screen'];
 window.slimyShadow = {};
+/* Stage 4 tiles: the game's own tileset.png (+ tiledim/tilerev), sheet at
+   original size, 20x20 cells at x+1+gx*21, y+161+gy*21 (allui.c gent_rect).
+   C decides each cell (rule 7): code = top | under<<10 | sheet<<20 (gents go past 255), -1 = text. */
+var TILE = 20, SCALE = 1, tileMode = 'Tiles', tileGen = 0, sheetsReady = false;
+try { var tm = localStorage.getItem('web-tiles'); if (tm === 'None' || tm === 'Tiles') tileMode = tm; } catch (e) {}
+var sheets = ['tileset.png', 'tiledim.png', 'tilerev.png'].map(function (n) {
+  var i = new Image(); return i; });
+var lastMap = null;
+function loadSheets() {
+  var gen = ++tileGen, left = sheets.length;
+  ['tileset.png', 'tiledim.png', 'tilerev.png'].forEach(function (n, k) {
+    sheets[k].onload = function () { if (gen === tileGen && --left === 0) { sheetsReady = true; showMode(); } };
+    sheets[k].src = n;
+  });
+}
+var pairCol = ['#ccc', '#c90', '#46f', '#e33', '#3c3', '#3cc', '#c3c', '#666'];
+var acsCh = { 0xE000: '\u2588', 0xE001: '\u00b7', 0xE002: '\u2502', 0xE003: '\u2500' };
+function drawMap() {
+  if (!lastMap) return;
+  var c = document.getElementById('mapc'), t = lastMap.t, cells = lastMap.c, h = lastMap.h, w = lastMap.w;
+  var S = TILE * SCALE;
+  if (c.width !== w * S || c.height !== h * S) { c.width = w * S; c.height = h * S; }
+  var g = c.getContext('2d');
+  g.imageSmoothingEnabled = false;
+  g.fillStyle = '#000'; g.fillRect(0, 0, c.width, c.height);
+  g.font = (S - 4) + 'px monospace'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) {
+    var i = y * w + x, code = t[i], dx = x * S, dy = y * S;
+    if (code >= 0) {
+      var sh = sheets[(code >> 20) & 3], top = code & 1023, und = (code >> 10) & 1023;
+      g.drawImage(sh, 1 + (und % 16) * 21, 161 + ((und / 16) | 0) * 21, TILE, TILE, dx, dy, S, S);
+      if (top !== und)
+        g.drawImage(sh, 1 + (top % 16) * 21, 161 + ((top / 16) | 0) * 21, TILE, TILE, dx, dy, S, S);
+    } else {
+      var cell = cells[i], ch = cell & 0xffff;
+      if (ch === 32 && !(cell & 0x100000)) continue;
+      var col = pairCol[(cell >> 16) & 15];
+      if (cell & 0x100000) { g.fillStyle = col; g.fillRect(dx, dy, S, S); col = '#000'; }
+      g.fillStyle = col;
+      g.fillText(ch >= 0xE000 ? (acsCh[ch] || '?') : String.fromCharCode(ch), dx + S / 2, dy + S / 2 + 1);
+    }
+  }
+}
+function showMode() {
+  var on = tileMode === 'Tiles' && sheetsReady;
+  document.getElementById('mapc').style.display = on ? 'block' : 'none';
+  document.getElementById('map').style.display = on ? 'none' : 'block';
+  document.getElementById('tilesbtn').textContent = 'Tiles: ' + (tileMode === 'Tiles' ? 'on' : 'None');
+  if (on) drawMap();
+}
+document.getElementById('tilesbtn').onclick = function () {
+  tileMode = tileMode === 'Tiles' ? 'None' : 'Tiles';
+  try { localStorage.setItem('web-tiles', tileMode); } catch (e) {}
+  if (tileMode === 'Tiles' && !sheetsReady) loadSheets(); else { if (tileMode === 'None') tileGen++; showMode(); }
+  this.blur();
+};
+if (tileMode === 'Tiles') loadSheets(); else showMode();
 var Module = {
+  rvipMap: function (t, c, h, w) {
+    lastMap = { t: Int32Array.from(t), c: Uint32Array.from(c), h: h, w: w };
+    window.slimyTiles = lastMap;
+    if (tileMode === 'Tiles' && sheetsReady) drawMap();
+  },
   rvipPane: function (pane, html, rows) {
     var id = panes[pane];
     document.getElementById(id).innerHTML = html;

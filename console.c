@@ -5,6 +5,7 @@
 #include "console.h"
 #include "ui.h"
 #include "glyph.h"
+#include "game.h"
 
 
 const unsigned int gent_width = 1;
@@ -314,6 +315,27 @@ void map_put(const unsigned int y, const unsigned int x, const gent_t gent, cons
   }
 
   put_custom(board_win, y, x, glyph_map[gent], curses_attr);
+
+#ifdef __EMSCRIPTEN__
+  /* RVIP tiles (rule 7): C picks the sprite as allui.c does: the gent's
+     tile over the level's floor tile; dim/sleep -> tiledim, reverse -> tilerev. */
+  {
+    /* slots empty in tileset.png (measured, see HANDOVER): text glyph */
+    static const gent_t no_tile[] = {
+      gent_amulet, gent_beetle_shell, gent_bone_dust, gent_caeltzan,
+      gent_chickpeas, gent_cranium, gent_eyeball, gent_falafel, gent_fish,
+      gent_lognac, gent_mandrake_root, gent_meat, gent_mummy_wrapping,
+      gent_prod, gent_sausage, gent_ybznek };
+    unsigned int k, has = 1;
+    unsigned int under = gent_floor + game->player->location->floor_type;
+    unsigned int top = (gent == gent_floor) ? under : (unsigned int)gent;
+    unsigned int sheet = (attr & MAP_REVERSE) ? 2 : ((attr & (MAP_DIM | MAP_SLEEP)) ? 1 : 0);
+    for (k = 0; k < sizeof(no_tile) / sizeof(no_tile[0]); k++)
+      if (no_tile[k] == gent) has = 0;
+    if (has)
+      web_map_tile(y, x, (int)(top | (under << 10) | (sheet << 20)));
+  }
+#endif
 
   return;
 }

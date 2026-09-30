@@ -68,6 +68,8 @@ extern int LINES, COLS;
 
 #define KEY_BACKSPACE 263
 
+void web_map_tile(int y, int x, int code); /* RVIP tiles, map pane */
+
 WINDOW * initscr(void);
 int endwin(void);
 WINDOW * newwin(int h, int w, int y, int x);

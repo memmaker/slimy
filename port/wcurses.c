@@ -154,6 +154,43 @@ static void js_pane(int pane, const char * html, int rows)
 }
 #endif
 
+/* RVIP tiles: per map cell the tile code map_put chose and the cell it
+   wrote; a tile is sent only while the cell still holds that char+attr,
+   so anything else drawn on the board (targeting, overlays) stays text. */
+#define TMAX (64 * 160)
+static int tile_code[TMAX];
+static chtype tile_cell[TMAX];
+static int tile_out[TMAX];
+
+void web_map_tile(int y, int x, int code)
+{
+  int i;
+  if (board_win == NULL || y < 0 || x < 0 || y >= board_win->h || x >= board_win->w) return;
+  i = y * board_win->w + x;
+  if (i >= TMAX) return;
+  tile_code[i] = code;
+  tile_cell[i] = board_win->cells[i];
+}
+
+#ifdef __EMSCRIPTEN__
+EM_JS(void, js_map, (const int * tiles, const unsigned int * cells, int h, int w), {
+  if (Module.rvipMap) Module.rvipMap(new Int32Array(HEAPU8.buffer, tiles, h * w),
+                                     new Uint32Array(HEAPU8.buffer, cells, h * w), h, w);
+});
+#else
+static void js_map(const int * t, const unsigned int * c, int h, int w)
+{ (void)t; (void)c; (void)h; (void)w; }
+#endif
+
+static void send_map_tiles(WINDOW * w)
+{
+  int i, n = w->h * w->w;
+  if (n > TMAX) n = TMAX;
+  for (i = 0; i < n; i++)
+    tile_out[i] = (tile_cell[i] == w->cells[i] && (w->cells[i] & A_CHARTEXT) != ' ') ? tile_code[i] : -1;
+  js_map(tile_out, w->cells, w->h, w->w);
+}
+
 /* Builds the window as HTML lines, trimmed (rule 5), and sends it. */
 int wrefresh(WINDOW * w)
 {
@@ -210,6 +247,7 @@ int wrefresh(WINDOW * w)
   while (len > 0 && out[len - 1] == '\n') len--;
   out[len] = 0;
   js_pane(pane, out, rows);
+  if (pane == PANE_MAP) send_map_tiles(w);
   return OK;
 }
 
