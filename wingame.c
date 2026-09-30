@@ -10,6 +10,9 @@
 #include "message.h"
 #include "losegame.h"
 #include "ui.h"
+#ifdef __EMSCRIPTEN__
+extern void web_end(void);
+#endif
 
 
 void win_game(const unsigned int ending)
@@ -20,6 +23,8 @@ void win_game(const unsigned int ending)
   game->died = time(NULL);
   game->game_over = true;
   game->won = true;
+
+  run_report("win", NULL);   /* RVIP stage 9: before the game-over key wait */
   
   if (options.morgue)
   {
@@ -28,6 +33,9 @@ void win_game(const unsigned int ending)
 
   game_over("You have won!\n", true);
   shutdown_everything();
-  
+
+#ifdef __EMSCRIPTEN__
+  web_end();
+#endif
   exit(0);
 } /* win_game */

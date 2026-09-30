@@ -188,6 +188,10 @@ EM_ASYNC_JS(void, web_end_js, (void), {
   await new Promise(function () {});   /* the page reloads */
 });
 void web_end(void) { web_end_js(); }
+/* RVIP stage 9: graveyard beacon; the page adds the name and sends it through RvipWM.report */
+EM_JS(void, web_beacon, (const char * ev, const char * killer, int depth, long turns), {
+  try { if (Module.rvipBeacon) Module.rvipBeacon(UTF8ToString(ev), UTF8ToString(killer), depth, Number(turns)); } catch (e) {}
+});
 /* RVIP: sound event from a game action (RVIP_SOUND, main.h); the page plays it */
 EM_JS(void, web_sound, (const char * e), {
   if (Module.rvipSound) Module.rvipSound(UTF8ToString(e));
@@ -197,6 +201,7 @@ static void js_map(const int * t, const unsigned int * c, int h, int w, int hy, 
 { (void)t; (void)c; (void)h; (void)w; (void)hy; (void)hx; }
 void web_sync(void) { }
 void web_end(void) { }
+void web_beacon(const char * ev, const char * killer, int depth, long turns) { (void)ev; (void)killer; (void)depth; (void)turns; }
 #endif
 
 static void send_map_tiles(WINDOW * w)

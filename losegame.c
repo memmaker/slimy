@@ -3,7 +3,9 @@
 #ifdef __EMSCRIPTEN__
 extern void web_sync(void);
 extern void web_end(void);
+extern void web_beacon(const char * ev, const char * killer, int depth, long turns);
 #endif
+#include "explore.h"
 #include <string.h>
 
 #include "main.h"
@@ -35,6 +37,9 @@ void check_for_player_death(const char * reason)
     game->died = time(NULL);
     game->game_over = true;
 
+    /* RVIP stage 9: report before the morgue/game-over key waits */
+    run_report((reason != NULL && strcmp(reason, "quit") == 0) ? "quit" : "death", reason);
+
     msgflush_wait();
 
     if (options.morgue)
@@ -57,6 +62,42 @@ void check_for_player_death(const char * reason)
   
   return;
 } /* check_for_player_death */
+
+
+
+/* RVIP stage 9: graveyard beacon (g=slimy, ev, killer, depth, turns). */
+static char killer_name[31];
+
+void set_killer(const creature_t * killer)
+{
+  /* name_one minus its article: name_only is "bah" for the wolves (monster.c) */
+  const char * n = killer ? killer->name_one : "";
+  if (strncmp(n, "a ", 2) == 0) n += 2;
+  else if (strncmp(n, "an ", 3) == 0) n += 3;
+  else if (strncmp(n, "the ", 4) == 0 || strncmp(n, "The ", 4) == 0) n += 4;
+  strncpy(killer_name, n, 30);
+  killer_name[30] = '\0';
+}
+
+void run_report(const char * ev, const char * reason)
+{
+#ifdef __EMSCRIPTEN__
+  const char * k = "";
+  int depth = -1;
+
+  if (strcmp(ev, "death") == 0)
+  {
+    k = killer_name[0] ? killer_name : (reason ? reason : "");
+    if (strncmp(k, "were ", 5) == 0) k += 5;       /* "were killed by an explosion" */
+  }
+  if (get_current_level() != NULL)
+    depth = explore_depth(get_current_level()->level_index);
+  web_beacon(ev, k, depth >= 0 ? depth + 1 : -1, (long)game->turns);
+#else
+  (void)ev; (void)reason;
+#endif
+  killer_name[0] = '\0';
+}
 
 
 

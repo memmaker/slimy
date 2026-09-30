@@ -218,6 +218,19 @@
 		setStatus: function (s) { if (s && !app.running) status(s.replace(/\(\d+\/\d+\)/, '').trim() || 'Loading…'); },
 		onAbort: function (what) { app.crashed(what); },
 		rvipSound: function (e) { sound(e); },
+		rvipBeacon: function (ev, killer, depth, turns) {   /* RVIP stage 9: graveyard report, fields from the C side */
+			try {
+				var NF = DIR + '/web-name', name = '';
+				try { name = Module.FS.readFile(NF, { encoding: 'utf8' }).trim(); } catch (e) {
+					name = (window.prompt('Your name for the graveyard (optional):', '') || '').trim().slice(0, 30);
+					try { Module.FS.writeFile(NF, name); } catch (e2) {}   /* asked once; blank = no name */
+				}
+				var p = [['g', 'slimy'], ['ev', ev], ['name', name], ['killer', killer], ['depth', depth >= 0 ? depth : ''], ['turns', turns]];
+				var q = p.filter(function (a) { return a[1] !== ''; })
+					.map(function (a) { return a[0] + '=' + encodeURIComponent(a[1]); }).join('&');
+				if (window.RvipWM && RvipWM.report) RvipWM.report(q); else fetch('/roguelikes/beacon?' + q, { keepalive: true, mode: 'no-cors' }).catch(function () {});
+			} catch (e) {}
+		},
 		rvipSync: function () { return new Promise(function (r) { app.sync(function () { r(); }); }); },
 		rvipEnd: function () {                /* death or save-and-quit: persist, then a new game */
 			app.running = false;

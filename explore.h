@@ -17,6 +17,8 @@ extern int explore_mode;
 blean_t explore_start(const int mode);
 action_t explore_step(creature_t * player);
 void explore_cancel(void);
+/* Link distance of level INDEX from the start level (-1 = unreachable). */
+int explore_depth(int index);
 blean_t explore_on_stairs(const int mode);
 
 #endif

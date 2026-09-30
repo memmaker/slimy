@@ -432,6 +432,7 @@ blean_t attack_internal(creature_t * attacker,
       queue_msg("You die...");
       
       sprintf(line, "were killed by %s", attacker->name_one);
+      set_killer(attacker);
 
       /* Goodbye. We won't proceed after this call. */
       check_for_player_death(line);

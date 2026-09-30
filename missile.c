@@ -702,6 +702,7 @@ blean_t missile_hit(level_t * level, creature_t * creature,
 	    /* If it was a creature that killed us, say so... */
 	    if (creature != NULL)
 	    {
+	      set_killer(creature);
 	      sprintf(line, "killed by %ss %s",
 		      creature->name_one,
 		      missile->single_id_name);

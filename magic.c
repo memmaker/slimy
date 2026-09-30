@@ -1107,6 +1107,7 @@ blean_t bone_crush(creature_t * caster, item_t * source, signed int param)
       queue_msg("You die...");
       
       sprintf(line, "were crushed by %s", caster->name_one);
+      set_killer(caster);
       
       check_for_player_death(line);
     }
@@ -1247,6 +1248,7 @@ blean_t shock(creature_t * caster, item_t * source, signed int param)
     {
       queue_msg("You die...");
       sprintf(line, "were electrocuted by %s", caster->name_one);
+      set_killer(caster);
       check_for_player_death(line);
     }
   }
@@ -1776,6 +1778,7 @@ blean_t frost_ray(creature_t * caster, item_t * source, signed int param)
 	{
 	  queue_msg("You die...");
 	  sprintf(line, "were killed by %ss frost ray", caster->name_one);
+	  set_killer(caster);
 	  check_for_player_death(line);
 	}
       }

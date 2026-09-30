@@ -235,6 +235,8 @@ static int ex_depth(int index)
   return (index >= 0 && index < LEVELS) ? depth[index] : -1;
 }
 
+int explore_depth(int index) { return ex_depth(index); }
+
 /* Does the staircase at (y, x) go the way MODE asks? */
 static int ex_stairs_match(level_t * level, unsigned int y, unsigned int x, int mode)
 {

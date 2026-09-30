@@ -23,3 +23,9 @@
 - 5.11: hook a "consume" sound after the game's own can/can't check, not at function entry (TSL `eat()` refuses non-food at the end of its type chain; the first hook played on "You can't eat that!") (TSL).
 - 5.16: death test in a scratch copy: one line setting health to 1 at the top of the player's turn plus explore keys reaches a real death in ~a minute; check hurt+death sounds and the web_end reload together (TSL).
 - 5.11: a web search for game sounds can surface third-party ports with their own audio (TSL: c0ze/tsl-go); not upstream and licence unknown, so synthesize instead and note it (TSL).
+- 5.14: a game without a player name prompt that names the hero from getlogin/getpwuid (`web_user` in wasm): the page asks once at the first run end (`window.prompt`), keeps the answer (even blank) in the IDBFS folder; headless tests answer it with `page.on('dialog')` (TSL).
+- 5.14: `name_only`-style species fields can be junk ("bah" for TSL's wolves): take the killer from the article form minus a/an/the and check every monster's name fields in the data (TSL).
+- 5.16: intercept the beacon in Playwright with `page.route('**/roguelikes/beacon**', r => r.fulfill({status: 204}))`: no local beacon route needed, and the URL is captured before the page reloads (TSL).
+- 5.8: tile sheets with palette transparency (magenta key): `convert('RGBA')` in PIL before cropping killer/card art, or the key colour shows (TSL).
+- 5.17: Pillow is not preinstalled in the cloud but `pip install pillow` works through the proxy (TSL).
+- 5.13: happyponyland.net (DNS/403) and archive.org Wayback (403) are blocked from the cloud; WebSearch snippets (backloggd, Roguetemple) still give a year (TSL).

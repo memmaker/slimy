@@ -1,9 +1,59 @@
 # The Slimy Lichmummy — handover
 
 ## RVIP progress
-- Stage done: 6 (docs and sound). Next: stage 7 (publish). Stage 7/8 public
-  steps (deploy, index card, shrine) are for the Mac session, and publishing
-  at all needs the user's decision (licence: contact the author first).
+- Stages done (cloud parts): 7 (publish prep), 8 (shrine prep), 9 (graveyard).
+  Next: the Mac session. Nothing is public; publishing at all needs the
+  user's decision (licence: contact the author, Ulf Åström, first).
+- **Mac session steps:** (1) decide on publishing / contact the author;
+  (2) `git pull`, build, visual check in the pane (tiles, windows, help,
+  sound, a death + quit); (3) repo per stage 7 only if publishing
+  (memmaker/slimy, README upstream link + compare view); (4) apply
+  `port/publish/`: `card.html`, `tree.html`, `years.json.txt`, `slimy.png`
+  -> `img/slimy.png`, run og.py for slimy (expected block `og.html`), drop the
+  page's old `<meta name="description">`, Help "About this version" line;
+  (5) shrine: `port/publish/shrine/slimy.html` + `shrine/slimy/`, then the
+  Info button, tree ✦ and `#bar h1` link, 375 px check; (6) killers:
+  `port/publish/killers/slimy/*.png` -> `killers/slimy/`, `slimy()` in
+  make.py (see `port/publish/README.md`); (7) `web/deploy.sh` + roguelikes
+  deploy.sh, check live, one real death in the user's browser on the graveyard.
+- Stage 9: beacon `g=slimy&ev&name&killer&depth&turns` (+ id/at by
+  RvipWM.report). C: `run_report(ev, reason)` in losegame.c, called in
+  `check_for_player_death()` right after `game_over = true` (before morgue and
+  game-over key waits; reason "quit" = the `Q` path in player.c -> ev=quit,
+  else death) and in `win_game()` (wingame.c, ev=win, before `game_over()`;
+  win_game now also calls `web_end()` like death). Save-and-quit (S) sends
+  nothing. Killer: `set_killer(creature)` before the death call in combat.c
+  (melee), missile.c (creature missiles), magic.c (crush, electrocute, frost
+  ray) = `name_one` minus a/an/the (`name_only` is "bah" for the wolves);
+  other deaths send the reason text minus "were " ("drowned", "killed by an
+  explosion"). Reset after each report. depth = link distance from the start
+  area + 1 (`explore_depth()`, explore.c; TSL has no numbered depth). EM_JS
+  `web_beacon` (port/wcurses.c) -> `Module.rvipBeacon` (web/slimy.js) builds
+  the URL-encoded query and sends via `RvipWM.report`. Name: TSL names the
+  hero from getlogin/getpwuid (`web_user` in wasm), so the page asks once
+  (`window.prompt` at the first run end), keeps it in `/slimy/web-name`
+  (blank = no name, not asked again).
+- Missing fields: `score` (TSL has no score or high-score list), `lvl` (no
+  character levels: facets instead). Killers without art: Argor, Ghrazghaar,
+  Sulkor, Cha'ajd, Sir Lognac, Ybznek (uniques with no gent set in unique.c;
+  page falls back to text), disguised mimics (item names).
+- Killer PNGs: `port/publish/killers.py` -> 44 PNGs, 32 px, from tileset.png
+  gent slots with the console.c stand-ins, magenta transparent.
+- Tested (Playwright, beacon intercepted with `page.route`): quit (`Q`,`y`)
+  -> `ev=quit&name=Quitter&depth=1&turns=1&id&at`; death (scratch build
+  health=1) -> `ev=death&killer=gnoblin|ratman&depth=1&turns=…`, name asked
+  once; win (scratch build calling `win_game` at turn 3, not committed) ->
+  `ev=win&name=Winner&depth=1&turns=3`. No page errors. Outbox 503/resend
+  not re-tested (shared rvip-wm code). Real win path (Chapel of Fallen Stars
+  win trap, traps.c) not reached by play.
+- Stage 8: shrine draft `port/publish/shrine/` (see NOTES.md there);
+  happyponyland.net, archive.org, RogueBasin blocked from the cloud; no
+  walkthrough found; manual = README.md (+ CHANGES.TXT), unmodified copies.
+  Shrine page not rendered/tested at 375 px yet.
+- Stage 7: drafts in `port/publish/` (README.md there lists them). Year 2006
+  (backloggd, Roguetemple); CHANGES.TXT's first date is 0.3 (2007-09-22):
+  cross-check RogueBasin on the Mac. Version line: 0.40 ·
+  vitaly-zdanevich/the-slimy-lichmummy @ 6f885be.
 - Stage 6: Help = `web/make-help.py` -> `dist/help.html` (self-contained,
   shaped like a Docs GAMES/GUIDES entry; on the Mac move it into
   build-docs.py/guides.py). Content: README.md + help.c pages in own words;
