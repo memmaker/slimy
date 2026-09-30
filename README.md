@@ -1,3 +1,12 @@
+**Web port** of The Slimy Lichmummy 0.40, playable at https://ruzzoli.de/roguelikes/slimy/ .
+Upstream: [vitaly-zdanevich/the-slimy-lichmummy @ 6f885be](https://gitlab.com/vitaly-zdanevich/the-slimy-lichmummy/-/tree/6f885be8f3f5ad640b3fc711ea5e4e56189c06e8)
+(archive.org ArchiveRL.7z upload of Ulf Astrom's 0.40). Our changes:
+[compare view](https://github.com/memmaker/slimy/compare/6f885be...main). Build: `sh web/build.sh`
+(Emscripten). Second tile set, music and some sound recipes from
+[c0ze/tsl-go](https://github.com/c0ze/tsl-go), used with permission.
+
+---
+
 The Slimy Lichmummy Manual 0.40
 (it's the Lichmummy that's slimy, not the manual)
 
