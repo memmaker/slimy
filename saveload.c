@@ -92,15 +92,15 @@ void delete_savefile()
 
 
 /*
-  Attempts to save the current game.
+  RVIP: writes the savefile (atomic: <save>.tmp, then rename) without
+  ending the game. Returns true on success.
 */
-void try_to_save_game()
+static blean_t write_save_atomic(void)
 {
   blean_t success;
   char * savefile_path;
   FILE * savefile;
- 
-  /* Where is the savefile? */
+
   savefile_path = get_file_path(SAVE_FILENAME);
 
   build_saveload_table();
@@ -128,15 +128,53 @@ void try_to_save_game()
     free(tmp_path);
   }
 
-  /* We don't need this anymore. */
   free(savefile_path);
-  savefile_path = NULL;
-  
-  /*
-    We won't *wipe* the table since the items are still in-game and
-    will be taken care of by shutdown_everything().
-  */
   del_saveload_table(false);
+
+  return success;
+}
+
+
+
+#ifdef __EMSCRIPTEN__
+/*
+  RVIP web autosave: TSL deletes the save when it loads it, so a
+  crashed tab would lose the run. player_control() calls this at the
+  idle command prompt right after the start and after each level
+  change; the save is removed again when the run ends (death, quit,
+  win). Save-and-quit (S) keeps its save as before.
+*/
+int web_autosave_pending = 1;
+
+void web_autosave(void)
+{
+  web_autosave_pending = 0;
+
+  if (game == NULL || game->player == NULL || game->game_over)
+    return;
+
+  if (write_save_atomic())
+    web_sync();
+}
+
+void web_autosave_delete(void)
+{
+  char * savefile_path = get_file_path(SAVE_FILENAME);
+
+  remove(savefile_path);
+  free(savefile_path);
+  web_sync();
+}
+#endif
+
+
+
+/*
+  Attempts to save the current game.
+*/
+void try_to_save_game()
+{
+  blean_t success = write_save_atomic();
     
   if (success == false)
   {

@@ -466,6 +466,12 @@ void change_level(const unsigned int level_index)
   build_forcefields(get_current_level());
 
   level_changed = true;
+#ifdef __EMSCRIPTEN__
+  {
+    extern int web_autosave_pending;
+    web_autosave_pending = 1;   /* RVIP: autosave at the next prompt */
+  }
+#endif
 
   return;
 } /* change_level */

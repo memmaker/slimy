@@ -12,6 +12,7 @@
 #include "ui.h"
 #ifdef __EMSCRIPTEN__
 extern void web_end(void);
+void web_autosave_delete(void);
 #endif
 
 
@@ -25,6 +26,9 @@ void win_game(const unsigned int ending)
   game->won = true;
 
   run_report("win", NULL);   /* RVIP stage 9: before the game-over key wait */
+#ifdef __EMSCRIPTEN__
+  web_autosave_delete();     /* RVIP: the run is over, no autosave left */
+#endif
   
   if (options.morgue)
   {

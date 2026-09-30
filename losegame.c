@@ -3,6 +3,7 @@
 #ifdef __EMSCRIPTEN__
 extern void web_sync(void);
 extern void web_end(void);
+void web_autosave_delete(void);
 extern void web_beacon(const char * ev, const char * killer, int depth, long turns);
 #endif
 #include "explore.h"
@@ -39,6 +40,9 @@ void check_for_player_death(const char * reason)
 
     /* RVIP stage 9: report before the morgue/game-over key waits */
     run_report((reason != NULL && strcmp(reason, "quit") == 0) ? "quit" : "death", reason);
+#ifdef __EMSCRIPTEN__
+    web_autosave_delete();   /* RVIP: the run is over, no autosave left */
+#endif
 
     msgflush_wait();
 

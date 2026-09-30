@@ -104,8 +104,8 @@ SAVING = '''<ul>
 <li><kbd>S</kbd> saves and quits. The save is kept in this browser (IndexedDB); the page
 then starts again and TSL loads the save, continuing where you left off.</li>
 <li>As in the original, <strong>loading a save deletes it</strong>: there is exactly one
-save, and it only exists between <kbd>S</kbd> and your next visit. If the page is closed
-or crashes without <kbd>S</kbd>, that run is lost.</li>
+save. The web version also autosaves at the start and on every level change, so a closed
+or crashed page continues from the last level change; a death, quit or win removes it.</li>
 <li><em>File ▾ → Export save</em> downloads the save file (only while one exists),
 <em>Import save</em> loads one, <em>New game</em> deletes it. TSL's manual considers
 backup copies cheating; that choice is yours.</li>
