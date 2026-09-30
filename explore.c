@@ -310,6 +310,69 @@ static int ex_bfs(level_t * level, int mode, int * blocked)
   return d;
 }
 
+/*
+  The first step D lands on stairs or an item that isn't the target
+  (stepping there logs "You see..." and stops the walk). Look for an
+  equally short first step onto a plain cell: distances from the
+  target TO over the same passable cells. Reuses FROM/QUEUE.
+*/
+static int ex_side_step(level_t * level, int to, int d, int * dist, int * queue)
+{
+  unsigned int n = ex_sy * ex_sx;
+  int head = 0, tail = 0, i, k, best = -1;
+  int py = game->player->y, px = game->player->x;
+
+  for (i = 0; i < (int)n; i++)
+    dist[i] = -1;
+
+  dist[to] = 0;
+  queue[tail++] = to;
+
+  while (head < tail)
+  {
+    int cur = queue[head++];
+    int cy = cur / ex_sx, cx = cur % ex_sx;
+
+    if (cur != to && level->memory[cy][cx] == gent_door_closed)
+      continue;
+
+    for (k = 0; k < 8; k++)
+    {
+      int ny = cy + ex_dy[k], nx = cx + ex_dx[k];
+
+      if (ny < 0 || nx < 0 || ny >= (int)ex_sy || nx >= (int)ex_sx)
+	continue;
+
+      if (dist[IDX(ny, nx)] != -1 || !ex_passable(level, ny, nx))
+	continue;
+
+      dist[IDX(ny, nx)] = dist[cur] + 1;
+      queue[tail++] = IDX(ny, nx);
+    }
+  }
+
+  best = dist[IDX(py + ex_dy[d], px + ex_dx[d])];
+
+  if (best < 0)
+    return d;
+
+  for (k = 0; k < 8; k++)
+  {
+    int ny = py + ex_dy[k], nx = px + ex_dx[k], ni;
+
+    if (ny < 0 || nx < 0 || ny >= (int)ex_sy || nx >= (int)ex_sx)
+      continue;
+
+    ni = IDX(ny, nx);
+
+    if (dist[ni] == best && ni != to &&
+	!ex_is_stairs(level, ny, nx) && !ex_item[ni])
+      return k;
+  }
+
+  return d;
+}
+
 static int ex_bfs_once(level_t * level, int mode, int * blocked)
 {
   unsigned int n = ex_sy * ex_sx;
@@ -391,6 +454,9 @@ static int ex_bfs_once(level_t * level, int mode, int * blocked)
     for (d = 0; d < 8; d++)
       if (IDX(game->player->y + ex_dy[d], game->player->x + ex_dx[d]) == cur)
 	break;
+
+    if (cur != found && (ex_is_stairs(level, cur / ex_sx, cur % ex_sx) || ex_item[cur]))
+      d = ex_side_step(level, found, d, from, queue);
   }
 
   free(from);
