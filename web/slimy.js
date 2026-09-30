@@ -229,7 +229,8 @@
 	function playerName() {
 		var NF = DIR + '/web-name', name = '';
 		try { name = Module.FS.readFile(NF, { encoding: 'utf8' }).trim(); } catch (e) {
-			name = (window.prompt('Your hero\'s name (also shown on the graveyard; optional):', '') || '').replace(/[^\x20-\x7e]/g, '').trim().slice(0, 29);
+			var a = null; try { a = window.prompt('Your hero\'s name (also shown on the graveyard; optional):', ''); } catch (e3) { return ''; }   /* no dialogs (embedded pane): blank, ask next time */
+			name = (a || '').replace(/[^\x20-\x7e]/g, '').trim().slice(0, 29);
 			try { Module.FS.writeFile(NF, name); app.sync(); } catch (e2) {}   /* asked once; blank = no name */
 		}
 		return name;
