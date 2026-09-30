@@ -18,6 +18,7 @@ typedef struct rvip_window
   int cy, cx;
   unsigned int attr;
   chtype * cells;        /* char | attr */
+  int touched;           /* written since the last wrefresh */
 } WINDOW;
 
 extern WINDOW * stdscr;

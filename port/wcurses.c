@@ -85,6 +85,7 @@ int waddch(WINDOW * w, chtype c)
     return OK;
   }
   if (w->cy >= w->h) return ERR;
+  w->touched = 1;
   w->cells[w->cy * w->w + w->cx] = ch | (c & ~A_CHARTEXT) | w->attr;
   if (++w->cx >= w->w)
   {
@@ -115,6 +116,7 @@ int werase(WINDOW * w)
   int i;
   for (i = 0; i < w->h * w->w; i++) w->cells[i] = ' ';
   w->cy = w->cx = 0;
+  w->touched = 1;
   return OK;
 }
 
@@ -302,6 +304,7 @@ int wrefresh(WINDOW * w)
   /* drop trailing empty lines (rule 5) */
   while (len > 0 && out[len - 1] == '\n') len--;
   out[len] = 0;
+  w->touched = 0;
   js_pane(pane, out, rows);
   if (pane == PANE_MAP) send_map_tiles(w);
   return OK;
@@ -323,6 +326,7 @@ EMSCRIPTEN_KEEPALIVE void web_key(int k)
 int getch(void)
 {
   int k;
+  if (stdscr->touched) wrefresh(stdscr);   /* as curses: getch = wgetch(stdscr) */
   while (kq_head == kq_tail) emscripten_sleep(10);
   k = kq[kq_head];
   kq_head = (kq_head + 1) % KQ;
