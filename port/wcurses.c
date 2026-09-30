@@ -209,7 +209,23 @@ void web_level(int i) { static int last = -1; if (i != last) { last = i; js_leve
 EM_JS(void, web_sound, (const char * e), {
   if (Module.rvipSound) Module.rvipSound(UTF8ToString(e));
 });
+/* RVIP: message log window, one line per game message as flushed (message.c) */
+EM_JS(void, web_log_msg, (const char * t), {
+  if (Module.rvipLog) Module.rvipLog(UTF8ToString(t));
+});
+/* RVIP: Inventory window, lines "letter\tname\tclass" built by player.c */
+EM_JS(void, web_inventory, (const char * t), {
+  if (Module.rvipInv) Module.rvipInv(UTF8ToString(t));
+});
+/* RVIP: the hero's name from /slimy/web-name (asked once by the page) */
+EM_JS(void, web_player_name, (char * buf, int n), {
+  var s = Module.rvipName ? Module.rvipName() : "";
+  stringToUTF8(s || "", buf, n);
+});
 #else
+void web_log_msg(const char * t) { (void)t; }
+void web_inventory(const char * t) { (void)t; }
+void web_player_name(char * buf, int n) { if (n > 0) buf[0] = 0; }
 static void js_map(const int * t, const unsigned int * c, int h, int w, int hy, int hx, const int * t2)
 { (void)t; (void)c; (void)h; (void)w; (void)hy; (void)hx; (void)t2; }
 void web_level(int i) { (void)i; }
@@ -324,7 +340,9 @@ int web_poll_key(void)
 }
 
 void web_pause(int ms) { emscripten_sleep(ms); }
+int web_keys_pending(void) { return kq_head != kq_tail; }
 #else
+int web_keys_pending(void) { return 0; }
 int getch(void) { int c = getchar(); return c == EOF ? 27 : c; }
 int web_poll_key(void) { return -1; }
 void web_pause(int ms) { (void)ms; }

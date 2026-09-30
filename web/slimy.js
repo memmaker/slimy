@@ -25,6 +25,8 @@
 			if (typeof s.mapFace === 'string') d.mapFace = s.mapFace;
 			if (s.audio) d.audio = { sound: s.audio.sound === true, music: s.audio.music === true };
 			if (s.wm) d.wm = s.wm;
+			/* layouts saved before the Inventory/Message log windows: take the new default */
+			if (d.wm && d.wm.multi && JSON.stringify(d.wm.multi).indexOf('"inv"') < 0) delete d.wm.multi;
 		} catch (e) { /* nothing saved yet */ }
 		L = d;
 	}
@@ -130,7 +132,7 @@
 	}
 	function face(n) { return n ? '"' + n + '", ui-monospace, Menlo, monospace' : 'ui-monospace, Menlo, monospace'; }
 	function applyFace() {
-		['#t-stat .body', '#t-msg .body', '#pop'].forEach(function (q) { var e = document.querySelector(q); if (e) e.style.fontFamily = face(L.face); });
+		['#t-stat .body', '#t-msg .body', '#inv', '#log', '#pop'].forEach(function (q) { var e = document.querySelector(q); if (e) e.style.fontFamily = face(L.face); });
 		$('map').style.fontFamily = face(L.mapFace);
 		camera();
 	}
@@ -151,8 +153,9 @@
 	function makeWM() {
 		wm = RvipWM({
 			area: $('game'), menu: $('btn-layout'),
-			wins: [{ id: 'map', title: 'Map' }, { id: 'msg', title: 'Messages' }, { id: 'stat', title: 'Status' }],
-			multi: { d: 'h', r: 0.64, a: { d: 'v', r: 0.8, a: 'map', b: 'msg' }, b: 'stat' },
+			wins: [{ id: 'map', title: 'Map' }, { id: 'msg', title: 'Messages' }, { id: 'stat', title: 'Status' },
+				{ id: 'inv', title: 'Inventory' }, { id: 'log', title: 'Message log' }],
+			multi: { d: 'h', r: 0.64, a: { d: 'v', r: 0.8, a: 'map', b: 'msg' }, b: { d: 'v', r: 0.45, a: 'stat', b: { d: 'v', r: 0.55, a: 'inv', b: 'log' } } },
 			single: { d: 'h', r: 0.64, a: { d: 'v', r: 0.8, a: 'map', b: 'msg' }, b: 'stat' },
 			state: L.wm,
 			save: function (st) { L.wm = st; saveLayout(); },
@@ -213,13 +216,24 @@
 		clear: function () { if (hasSave()) Module.FS.unlink(SAVE); },
 		put: function (file, data) { Module.FS.writeFile(SAVE, data); },
 		exportName: function () { return 'TSL-SAVE'; },
-		noSave: 'No saved game: TSL saves when you save and quit (S); loading the save removes it.',
+		noSave: 'No saved game: the web version autosaves at the start and on every level change (and S saves and quits); a finished run removes it.',
 		helpText: 'Press ? in the game for its key reference.'
 	});
 	setInterval(function () { if (app.running) app.sync(); }, 15000);
 	document.addEventListener('visibilitychange', function () { if (document.hidden && app.running) app.sync(); });
 	window.addEventListener('pagehide', function () { if (app.running) app.sync(); });
 	window.addEventListener('beforeunload', function (e) { if (app.running) { e.preventDefault(); e.returnValue = ''; } });
+
+	/* the player's name: asked once (first game start), kept in /slimy/web-name,
+	 * used as the hero's name (player.c) and in the graveyard report; blank = none */
+	function playerName() {
+		var NF = DIR + '/web-name', name = '';
+		try { name = Module.FS.readFile(NF, { encoding: 'utf8' }).trim(); } catch (e) {
+			name = (window.prompt('Your hero\'s name (also shown on the graveyard; optional):', '') || '').replace(/[^\x20-\x7e]/g, '').trim().slice(0, 29);
+			try { Module.FS.writeFile(NF, name); app.sync(); } catch (e2) {}   /* asked once; blank = no name */
+		}
+		return name;
+	}
 
 	var panes = ['map', 'stat', 'msg', 'screen'];
 	window.slimyShadow = {};
@@ -245,14 +259,25 @@
 		setStatus: function (s) { if (s && !app.running) status(s.replace(/\(\d+\/\d+\)/, '').trim() || 'Loading…'); },
 		onAbort: function (what) { app.crashed(what); },
 		rvipSound: function (e) { sound(e); },
+		rvipLog: function (t) { RvipWM.log($('log'), t); },   /* each game message as flushed (message.c) */
+		rvipInv: function (s) {                                /* lines "letter\tname\tclass" from player.c */
+			var b = $('inv');
+			b.textContent = '';
+			s.split('\n').forEach(function (l) {
+				if (!l) return;
+				var f = l.split('\t'), d = document.createElement('div'), t = document.createElement('span'), k = document.createElement('b');
+				k.textContent = f[0] + ') ';
+				t.appendChild(k); t.appendChild(document.createTextNode(f[1])); d.appendChild(t);
+				if (f[2]) d.className = f[2];
+				b.appendChild(d);
+			});
+			if (!b.firstChild) { var e = document.createElement('div'); e.textContent = '(nothing)'; b.appendChild(e); }
+		},
+		rvipName: playerName,
 		rvipLevel: function (i) { music.level = i; musicUpdate(); },
 		rvipBeacon: function (ev, killer, depth, turns) {   /* RVIP stage 9: graveyard report, fields from the C side */
 			try {
-				var NF = DIR + '/web-name', name = '';
-				try { name = Module.FS.readFile(NF, { encoding: 'utf8' }).trim(); } catch (e) {
-					name = (window.prompt('Your name for the graveyard (optional):', '') || '').trim().slice(0, 30);
-					try { Module.FS.writeFile(NF, name); } catch (e2) {}   /* asked once; blank = no name */
-				}
+				var name = playerName();
 				var p = [['g', 'slimy'], ['ev', ev], ['name', name], ['killer', killer], ['depth', depth >= 0 ? depth : ''], ['turns', turns]];
 				var q = p.filter(function (a) { return a[1] !== ''; })
 					.map(function (a) { return a[0] + '=' + encodeURIComponent(a[1]); }).join('&');

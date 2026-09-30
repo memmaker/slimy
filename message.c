@@ -8,6 +8,32 @@
 #include "message.h"
 
 unsigned int msg_counter = 0;
+
+#ifdef __EMSCRIPTEN__
+void web_log_msg(const char * t);
+#endif
+
+/*
+  RVIP explore: the texts of the last flush. A message identical to one
+  of them (a status repeated each turn, "You are bleeding!") is not new
+  and doesn't count for the explore stop.
+*/
+#define RV_PREV 16
+static char * rv_prev[RV_PREV];
+static int rv_prev_n = 0;
+static char * rv_cur[RV_PREV];
+static int rv_cur_n = 0;
+
+static int rv_is_repeat(const char * text)
+{
+  int i;
+
+  for (i = 0; i < rv_prev_n; i++)
+    if (strcmp(rv_prev[i], text) == 0)
+      return 1;
+
+  return 0;
+}
 #include "ui.h"
 
 
@@ -62,8 +88,10 @@ void queue_msg(const char * text)
   if (strlen(text) == 0)
     return;
 
-  /* RVIP explore: counts every message queued, for the explore stop. */
-  msg_counter++;
+  /* RVIP explore: counts every new message queued, for the explore
+     stop; a repeat of the last flush's text is not new. */
+  if (!rv_is_repeat(text))
+    msg_counter++;
 
   /* Allocate memory for the new message */
   new_msg = malloc(sizeof(message_t));
@@ -162,6 +190,12 @@ void _msgflush_internal(const blean_t force_wait)
     strcat(line, " ");
     
     /* Move to the next message and delete the old one */
+#ifdef __EMSCRIPTEN__
+    web_log_msg(first_message->text);   /* RVIP: message log window */
+#endif
+    if (rv_cur_n < RV_PREV)
+      rv_cur[rv_cur_n++] = mydup(first_message->text);
+
     msg = first_message; /* Save where the old message is */
     first_message = first_message->next_message; /*Move on to the next message*/
     
@@ -178,6 +212,20 @@ void _msgflush_internal(const blean_t force_wait)
     msg = NULL;
   }
   
+  /* RVIP explore: this flush becomes the "last flush" */
+  {
+    int i;
+
+    for (i = 0; i < rv_prev_n; i++)
+      free(rv_prev[i]);
+
+    for (i = 0; i < rv_cur_n; i++)
+      rv_prev[i] = rv_cur[i];
+
+    rv_prev_n = rv_cur_n;
+    rv_cur_n = 0;
+  }
+
   /* Reset these; they aren't valid any more */
   last_message = NULL;
   first_message = NULL;

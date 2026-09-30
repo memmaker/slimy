@@ -32,6 +32,13 @@
 #include "stacks.h"
 #include "saveload.h"
 #include "losegame.h"
+#ifdef __EMSCRIPTEN__
+extern int web_autosave_pending;
+void web_autosave(void);
+int web_keys_pending(void);
+void web_player_name(char * buf, int n);
+void web_inventory(const char * t);
+#endif
 #include "ability.h"
 #include "missile.h"
 #include "options.h"
@@ -61,6 +68,52 @@
 /*
   This is the players interface to the game.
 */
+#ifdef __EMSCRIPTEN__
+/*
+  RVIP: the Inventory window. One line per carried item in letter
+  order, "letter TAB name TAB class" (class "eq" = equipped, with TSL's
+  own in-use text appended); sent only when it changed.
+*/
+static void web_send_inventory(const creature_t * creature)
+{
+  static char * last = NULL;
+  char buf[8192];
+  size_t len = 0;
+  const char * l;
+  item_t * item;
+
+  buf[0] = '\0';
+
+  for (l = item_letters; *l != '\0'; l++)
+    for (item = creature->first_item; item != NULL; item = item->next_item)
+    {
+      char * name;
+      char use[20] = "";
+
+      if (item->letter != *l)
+	continue;
+
+      name = get_inv_item_name(item);
+
+      if (item->equipped)
+	in_use_str(use, item);
+
+      if (len + strlen(name) + 40 < sizeof(buf))
+	len += sprintf(buf + len, "%c\t%s%s%s\t%s\n", item->letter, name,
+		       use[0] ? " " : "", use, item->equipped ? "eq" : "");
+
+      free(name);
+    }
+
+  if (last != NULL && strcmp(last, buf) == 0)
+    return;   /* starts NULL: an empty inventory is still sent once */
+
+  free(last);
+  last = mydup(buf);
+  web_inventory(buf);
+}
+#endif
+
 void player_control(creature_t * creature)
 {
   int move_y;
@@ -126,6 +179,9 @@ void player_control(creature_t * creature)
      * update it before the loop, then only if something happens that
      * needs it to be updated. */
     display_stats(creature);
+#ifdef __EMSCRIPTEN__
+    web_send_inventory(creature);
+#endif
 
     msgflush_nowait();
 
@@ -145,6 +201,14 @@ void player_control(creature_t * creature)
       if (can_see_anyone() == false)
 	input = action_inventory;
     }
+
+#ifdef __EMSCRIPTEN__
+    /* RVIP web autosave: at the idle prompt after the start or a
+       level change, with no keys waiting (saveload.c). */
+    if (input == action_undefined && web_autosave_pending &&
+	!web_keys_pending())
+      web_autosave();
+#endif
 
     if (input == action_undefined)
     {
@@ -1381,7 +1445,17 @@ creature_t * create_character()
   }
   else
   {
-    #ifndef _WIN32
+    #ifdef __EMSCRIPTEN__
+    /* RVIP: the web has no login name ("web_user"): use the name the
+       page keeps in /slimy/web-name (asked once at the first start;
+       blank keeps TSL's fallback "player"). */
+    char web_name[30];
+
+    web_player_name(web_name, sizeof(web_name));
+
+    if (web_name[0] != '\0')
+      set_creature_name(new_player, web_name, web_name, web_name);
+    #elif !defined(_WIN32)
     /* Try to get the username of the player */
     if (getlogin() != NULL)
       set_creature_name(new_player, getlogin(), getlogin(), getlogin());
