@@ -40,6 +40,7 @@
 	.win > .t .zoom button { padding: 0 5px; font-size: 11px; line-height: 14px; height: 16px; }
 	.win > .body { flex: 1; min-height: 0; overflow: hidden; }
 	.win canvas { display: block; }
+	.win canvas[hidden] { display: none; }
 	#pop { position: absolute; z-index: 3; background: #000; border: 1px solid var(--dim); box-shadow: 0 6px 24px rgba(0,0,0,.7); }
 	#t-msg .body { overflow: auto; }   /* newest message kept in view (rogue36.js) */
 	/* text windows: lines from the game (rogue36.js), sized by the WM's A−/A+ on the body */
