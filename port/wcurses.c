@@ -22,7 +22,11 @@ extern WINDOW * message_bar;
 WINDOW * stdscr = NULL;
 int LINES = 24, COLS = 80;
 
-enum { PANE_MAP, PANE_STATUS, PANE_MSG, PANE_SCREEN };
+enum { PANE_MAP, PANE_STATUS, PANE_MSG, PANE_SCREEN, PANE_TERM };
+
+/* one-window mode: the terminal as the console build shows it, every
+   refreshed window copied in at its position (the last refresh wins) */
+static WINDOW * term = NULL;
 
 static WINDOW * mkwin(int h, int w)
 {
@@ -44,10 +48,12 @@ int endwin(void) { return OK; }
 
 WINDOW * newwin(int h, int w, int y, int x)
 {
-  (void)y; (void)x;
+  WINDOW * win;
   if (h <= 0) h = LINES - y;
   if (w <= 0) w = COLS - x;
-  return mkwin(h, w);
+  win = mkwin(h, w);
+  win->oy = y; win->ox = x;
+  return win;
 }
 
 int delwin(WINDOW * w)
@@ -255,24 +261,18 @@ static void send_map_tiles(WINDOW * w)
 }
 
 /* Builds the window as HTML lines, trimmed (rule 5), and sends it. */
-int wrefresh(WINDOW * w)
+static void send_rows(int pane, WINDOW * w)
 {
   static char * out = NULL;
   static size_t cap = 0;
   size_t len = 0;
-  int y, x, rows = 0, pane;
-
-  if (w == board_win) pane = PANE_MAP;
-  else if (w == status_win) pane = PANE_STATUS;
-  else if (w == message_bar) pane = PANE_MSG;
-  else pane = PANE_SCREEN;
+  int y, x, rows = 0;
 
   if (cap < (size_t)(w->h * w->w * 48 + 64))
   {
     cap = w->h * w->w * 48 + 64;
     out = realloc(out, cap);
   }
-
   for (y = 0; y < w->h; y++)
   {
     int last = -1;
@@ -309,9 +309,27 @@ int wrefresh(WINDOW * w)
   /* drop trailing empty lines (rule 5) */
   while (len > 0 && out[len - 1] == '\n') len--;
   out[len] = 0;
-  w->touched = 0;
   js_pane(pane, out, rows);
+}
+
+int wrefresh(WINDOW * w)
+{
+  int pane, y, x;
+
+  if (w == board_win) pane = PANE_MAP;
+  else if (w == status_win) pane = PANE_STATUS;
+  else if (w == message_bar) pane = PANE_MSG;
+  else pane = PANE_SCREEN;
+
+  w->touched = 0;
+  send_rows(pane, w);
   if (pane == PANE_MAP) send_map_tiles(w);
+
+  if (term == NULL) term = mkwin(LINES, COLS);
+  for (y = 0; y < w->h && w->oy + y < LINES; y++)
+    for (x = 0; x < w->w && w->ox + x < COLS; x++)
+      term->cells[(w->oy + y) * COLS + w->ox + x] = w->cells[y * w->w + x];
+  send_rows(PANE_TERM, term);
   return OK;
 }
 

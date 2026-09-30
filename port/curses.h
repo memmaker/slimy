@@ -15,6 +15,7 @@ typedef struct rvip_window
 {
   int pane;              /* 0 map, 1 status, 2 messages, 3 screen */
   int h, w;
+  int oy, ox;            /* position on the 80x24 terminal (one-window mode) */
   int cy, cx;
   unsigned int attr;
   chtype * cells;        /* char | attr */

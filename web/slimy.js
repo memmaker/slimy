@@ -25,7 +25,7 @@
 			if (typeof s.mapFace === 'string') d.mapFace = s.mapFace;
 			if (s.audio) d.audio = { sound: s.audio.sound === true, music: s.audio.music === true };
 			if (s.wm) d.wm = s.wm;
-			/* layouts saved before the Inventory/Message log windows: take the new default */
+			/* layouts saved before the Visible window: take the new defaults */
 			if (d.wm && d.wm.multi && JSON.stringify(d.wm.multi).indexOf('"vis"') < 0) delete d.wm.multi;
 		} catch (e) { /* nothing saved yet */ }
 		L = d;
@@ -132,7 +132,7 @@
 	}
 	function face(n) { return n ? '"' + n + '", ui-monospace, Menlo, monospace' : 'ui-monospace, Menlo, monospace'; }
 	function applyFace() {
-		['#t-stat .body', '#t-msg .body', '#inv', '#vis', '#log', '#pop'].forEach(function (q) { var e = document.querySelector(q); if (e) e.style.fontFamily = face(L.face); });
+		['#t-stat .body', '#t-msg .body', '#inv', '#vis', '#log', '#pop', '#term'].forEach(function (q) { var e = document.querySelector(q); if (e) e.style.fontFamily = face(L.face); });
 		$('map').style.fontFamily = face(L.mapFace);
 		camera();
 	}
@@ -160,6 +160,17 @@
 		RvipWM.visible(b, lastVis, visIcon);
 	}
 
+	/* ---------- one-window mode: the console build's whole 80x24 terminal (port/wcurses.c), font fitted ---------- */
+	var termFs = 0;
+	function fitTerm() {
+		var b = $('term'), box = b.parentNode, m = document.createElement('span');
+		if (!wm || !wm.shown('term')) { termFs = 0; return; }
+		b.style.fontSize = '100px'; m.textContent = 'MMMMMMMMMM'; b.appendChild(m);
+		var cw = m.offsetWidth / 10; m.remove();
+		termFs = Math.max(6, Math.floor(Math.min(box.clientWidth * 100 / (80 * cw), box.clientHeight / (24 * 1.3))));
+		b.style.fontSize = termFs + 'px';
+	}
+
 	/* ---------- pop-up: stdscr (menus, help, item lists), text follows Messages' size ---------- */
 	function popShow(on) {
 		var p = $('pop');
@@ -172,12 +183,13 @@
 		wm = RvipWM({
 			area: $('game'), menu: $('btn-layout'),
 			wins: [{ id: 'map', title: 'Map' }, { id: 'msg', title: 'Messages' }, { id: 'stat', title: 'Status' },
-				{ id: 'inv', title: 'Inventory' }, { id: 'vis', title: 'Visible' }, { id: 'log', title: 'Message log' }],
+				{ id: 'inv', title: 'Inventory' }, { id: 'vis', title: 'Visible' }, { id: 'log', title: 'Message log' }, { id: 'term', title: 'Whole screen' }],
 			multi: { d: 'h', r: 0.64, a: { d: 'v', r: 0.8, a: 'map', b: 'msg' }, b: { d: 'v', r: 0.4, a: 'stat', b: { d: 'v', r: 0.36, a: 'inv', b: { d: 'v', r: 0.5, a: 'vis', b: 'log' } } } },
-			single: { d: 'h', r: 0.64, a: { d: 'v', r: 0.8, a: 'map', b: 'msg' }, b: 'stat' },
+			single: 'term',
+			noFont: 'term',
 			state: L.wm,
 			save: function (st) { L.wm = st; saveLayout(); },
-			layout: function (r) { rects = r; redrawMap(); if (!$('pop').hidden) popShow(true); var mb = $('msg').parentNode; mb.scrollTop = mb.scrollHeight; },
+			layout: function (r) { rects = r; fitTerm(); redrawMap(); if (!$('pop').hidden) popShow(true); var mb = $('msg').parentNode; mb.scrollTop = mb.scrollHeight; },
 			zoom: { map: function () { redrawMap(); }, msg: function () { if (!$('pop').hidden) popShow(true); } },
 			size: { map: function () { return 16; } },
 			fontMax: { map: 19 },
@@ -254,7 +266,7 @@
 		return name;
 	}
 
-	var panes = ['map', 'stat', 'msg', 'screen'];
+	var panes = ['map', 'stat', 'msg', 'screen', 'term'];
 	window.slimyShadow = {};
 	window.Module = {
 		preRun: [function () {
@@ -323,6 +335,7 @@
 			if (pane === 3) popShow(rows > 0);
 			else if (pane === 0) popShow(false);
 			if (pane === 2) e.parentNode.scrollTop = e.parentNode.scrollHeight;
+			if (pane === 4 && !termFs) fitTerm();
 		}
 	};
 

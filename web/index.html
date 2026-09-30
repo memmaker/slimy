@@ -52,7 +52,8 @@
 	#t-inv .body .cur { box-shadow: inset 0 -2px #dcdcdc; }
 	#pop { overflow: auto; font-family: monospace; }
 	#pop .txt { padding: 0 1ch; }
-	#pop[hidden] { display: none; }
+	#pop[hidden], .wm-single #pop { display: none; }
+	#term { padding: 0; line-height: 1.3; }   /* one-window mode: fitTerm() sets the size */
 	.split { position: absolute; background: var(--gut); z-index: 2; touch-action: none; }
 	.split.v { cursor: col-resize; }
 	.split.h { cursor: row-resize; }
@@ -135,6 +136,7 @@
 	<div class="win" id="t-inv"><div class="t"><span class="name">Inventory</span></div><div class="body wm-list" id="inv"></div></div>
 	<div class="win" id="t-vis"><div class="t"><span class="name">Visible</span></div><div class="body wm-list" id="vis"></div></div>
 	<div class="win" id="t-log"><div class="t"><span class="name">Message log</span></div><div class="body wm-list" id="log"></div></div>
+	<div class="win" id="t-term"><div class="t"><span class="name">Whole screen</span></div><div class="body"><pre class="txt" id="term"></pre></div></div>
 	<div id="pop" hidden><pre class="txt" id="screen"></pre></div>
 </div>
 
