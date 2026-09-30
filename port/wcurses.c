@@ -219,6 +219,10 @@ EM_JS(void, web_log_msg, (const char * t), {
 EM_JS(void, web_inventory, (const char * t), {
   if (Module.rvipInv) Module.rvipInv(UTF8ToString(t));
 });
+/* RVIP: Visible window, lines "M|I<glyph><name>\t\t<tile>" built by console.c */
+EM_JS(void, web_visible, (const char * t), {
+  if (Module.rvipVis) Module.rvipVis(UTF8ToString(t));
+});
 /* RVIP: the hero's name from /slimy/web-name (asked once by the page) */
 EM_JS(void, web_player_name, (char * buf, int n), {
   var s = Module.rvipName ? Module.rvipName() : "";
@@ -227,6 +231,7 @@ EM_JS(void, web_player_name, (char * buf, int n), {
 #else
 void web_log_msg(const char * t) { (void)t; }
 void web_inventory(const char * t) { (void)t; }
+void web_visible(const char * t) { (void)t; }
 void web_player_name(char * buf, int n) { if (n > 0) buf[0] = 0; }
 static void js_map(const int * t, const unsigned int * c, int h, int w, int hy, int hx, const int * t2)
 { (void)t; (void)c; (void)h; (void)w; (void)hy; (void)hx; (void)t2; }

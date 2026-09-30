@@ -216,10 +216,13 @@ void draw_level()
   {
     extern void web_map_hero(int y, int x);
     extern void web_level(int index);
+    extern void web_send_visible(void);
   /* RVIP camera: the hero's board cell (the page centres a zoomed map on it) */
   web_map_hero(game->player->y - view_top, game->player->x - view_left);
   /* RVIP music: the level on screen (LEVEL_*), sent when it changes */
   web_level((int)game->player->location->level_index);
+  /* RVIP Visible window: creatures and items in view (console.c) */
+  web_send_visible();
   }
 #endif
 

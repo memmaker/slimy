@@ -26,7 +26,7 @@
 			if (s.audio) d.audio = { sound: s.audio.sound === true, music: s.audio.music === true };
 			if (s.wm) d.wm = s.wm;
 			/* layouts saved before the Inventory/Message log windows: take the new default */
-			if (d.wm && d.wm.multi && JSON.stringify(d.wm.multi).indexOf('"inv"') < 0) delete d.wm.multi;
+			if (d.wm && d.wm.multi && JSON.stringify(d.wm.multi).indexOf('"vis"') < 0) delete d.wm.multi;
 		} catch (e) { /* nothing saved yet */ }
 		L = d;
 	}
@@ -99,7 +99,7 @@
 		meas.remove();
 		return r;
 	}
-	function redrawMap() { drawMap(); camera(); }
+	function redrawMap() { drawMap(); camera(); drawVis(); }
 
 	/* ---------- tiles: the game's own tileset.png (+ dim/rev sheets), chosen by name ---------- */
 	/* sets by name: 'Tiles' = the game's own, 'tsl-go' = c0ze/tsl-go's sprites, 'None' = text */
@@ -132,7 +132,7 @@
 	}
 	function face(n) { return n ? '"' + n + '", ui-monospace, Menlo, monospace' : 'ui-monospace, Menlo, monospace'; }
 	function applyFace() {
-		['#t-stat .body', '#t-msg .body', '#inv', '#log', '#pop'].forEach(function (q) { var e = document.querySelector(q); if (e) e.style.fontFamily = face(L.face); });
+		['#t-stat .body', '#t-msg .body', '#inv', '#vis', '#log', '#pop'].forEach(function (q) { var e = document.querySelector(q); if (e) e.style.fontFamily = face(L.face); });
 		$('map').style.fontFamily = face(L.mapFace);
 		camera();
 	}
@@ -140,6 +140,24 @@
 		if (!n) { applyFace(); return; }
 		var ff = new FontFace(n, 'url(../fonts/' + n + '.woff)');
 		ff.load().then(function () { document.fonts.add(ff); applyFace(); }).catch(function () { status('Could not load the font ' + n + '.', true); });
+	}
+
+	/* ---------- Visible window: RvipWM.visible, icons from the chosen set (tile = own gent | tsl-go << 10) ---------- */
+	var lastVis = '';
+	function visIcon(t) {
+		if (!tilesOn()) return null;
+		var d = document.createElement('span'), go = L.tiles === 'tsl-go', n = go ? t >> 10 : t & 1023;
+		if (go && n === 255) return null;
+		d.style.cssText = 'display:inline-block;width:16px;height:16px;vertical-align:-3px;image-rendering:pixelated;background-repeat:no-repeat;' +
+			(go ? 'background-image:url(tslgo-sprites.png);background-size:256px 240px;background-position:' + -(n % 16) * 16 + 'px ' + -(n >> 4) * 16 + 'px'
+				: 'background-image:url(tileset.png);background-size:269.6px 666.4px;background-position:' + -(1 + (n % 16) * 21) * 0.8 + 'px ' + -(161 + (n >> 4) * 21) * 0.8 + 'px');
+		return d;
+	}
+	var visSet;
+	function drawVis() {   /* RvipWM.visible skips an unchanged list; a set switch forces the icons */
+		var b = $('vis'), set = tilesOn() ? L.tiles : '';
+		if (set !== visSet) { visSet = set; b._vis = null; }
+		RvipWM.visible(b, lastVis, visIcon);
 	}
 
 	/* ---------- pop-up: stdscr (menus, help, item lists), text follows Messages' size ---------- */
@@ -154,8 +172,8 @@
 		wm = RvipWM({
 			area: $('game'), menu: $('btn-layout'),
 			wins: [{ id: 'map', title: 'Map' }, { id: 'msg', title: 'Messages' }, { id: 'stat', title: 'Status' },
-				{ id: 'inv', title: 'Inventory' }, { id: 'log', title: 'Message log' }],
-			multi: { d: 'h', r: 0.64, a: { d: 'v', r: 0.8, a: 'map', b: 'msg' }, b: { d: 'v', r: 0.45, a: 'stat', b: { d: 'v', r: 0.55, a: 'inv', b: 'log' } } },
+				{ id: 'inv', title: 'Inventory' }, { id: 'vis', title: 'Visible' }, { id: 'log', title: 'Message log' }],
+			multi: { d: 'h', r: 0.64, a: { d: 'v', r: 0.8, a: 'map', b: 'msg' }, b: { d: 'v', r: 0.4, a: 'stat', b: { d: 'v', r: 0.36, a: 'inv', b: { d: 'v', r: 0.5, a: 'vis', b: 'log' } } } },
 			single: { d: 'h', r: 0.64, a: { d: 'v', r: 0.8, a: 'map', b: 'msg' }, b: 'stat' },
 			state: L.wm,
 			save: function (st) { L.wm = st; saveLayout(); },
@@ -274,6 +292,7 @@
 			});
 			if (!b.firstChild) { var e = document.createElement('div'); e.textContent = '(nothing)'; b.appendChild(e); }
 		},
+		rvipVis: function (s) { lastVis = s; drawVis(); },   /* creatures + items in view, from console.c */
 		rvipName: playerName,
 		rvipLevel: function (i) { music.level = i; musicUpdate(); },
 		rvipBeacon: function (ev, killer, depth, turns) {   /* RVIP stage 9: graveyard report, fields from the C side */

@@ -9,6 +9,12 @@
 #ifdef __EMSCRIPTEN__
 #include "places.h"
 #include "tslgo_tiles.h"
+#ifdef __EMSCRIPTEN__
+#include <string.h>
+#include "stuff.h"
+#include "fov.h"
+void web_visible(const char * t);
+#endif
 #endif
 
 
@@ -304,6 +310,20 @@ void map_move(const unsigned int y, const unsigned int x)
 
 
 
+#ifdef __EMSCRIPTEN__
+static gent_t web_top_gent(const gent_t gent);
+
+static void web_visible_line(char * buf, size_t * len, size_t cap, char kind, gent_t g, const char * name)
+{
+  unsigned int ch = glyph_map[g] & A_CHARTEXT;
+  unsigned int t2 = tslgo_gent[g] >= 253 ? 255 : tslgo_gent[g];
+
+  if (*len + strlen(name) + 32 < cap)
+    *len += sprintf(buf + *len, "%c%c%s\t\t%u\n", kind, (ch > 32 && ch < 127) ? (char)ch : '?',
+		    name, (unsigned int)web_top_gent(g) | (t2 << 10));
+}
+#endif
+
 void map_put(const unsigned int y, const unsigned int x, const gent_t gent, const unsigned char attr)
 {
   unsigned int curses_attr;
@@ -324,24 +344,10 @@ void map_put(const unsigned int y, const unsigned int x, const gent_t gent, cons
   /* RVIP tiles (rule 7): C picks the sprite as allui.c does: the gent's
      tile over the level's floor tile; dim/sleep -> tiledim, reverse -> tilerev. */
   {
-    /* RVIP stand-ins: gents with an empty slot in tileset.png get a
-       sprite from the same sheet (never text, never another set) */
-    static const gent_t stand_in[][2] = {
-      { gent_amulet, gent_crown }, { gent_beetle_shell, gent_carcass },
-      { gent_bone_dust, gent_bone }, { gent_caeltzan, gent_necromancer },
-      { gent_chickpeas, gent_bread }, { gent_cranium, gent_decapitated_head },
-      { gent_eyeball, gent_floating_brain }, { gent_falafel, gent_bread },
-      { gent_fish, gent_carcass }, { gent_lognac, gent_goatman },
-      { gent_mandrake_root, gent_mushroom }, { gent_meat, gent_carcass },
-      { gent_mummy_wrapping, gent_robe }, { gent_prod, gent_staff },
-      { gent_sausage, gent_cheese }, { gent_ybznek, gent_nameless_horror } };
-    unsigned int k;
-    gent_t tg = gent;
+    gent_t tg = web_top_gent(gent);
     unsigned int under = gent_floor + game->player->location->floor_type;
     unsigned int top;
     unsigned int sheet = (attr & MAP_REVERSE) ? 2 : ((attr & (MAP_DIM | MAP_SLEEP)) ? 1 : 0);
-    for (k = 0; k < sizeof(stand_in) / sizeof(stand_in[0]); k++)
-      if (stand_in[k][0] == gent) tg = stand_in[k][1];
     top = (tg == gent_floor) ? under : (unsigned int)tg;
     {
       /* second set: tsl-go's sprites (port/tslgo_tiles.h, web/mktslgo.py);
@@ -534,3 +540,75 @@ void scr_special(const unsigned int c)
 
   return;
 }
+
+#ifdef __EMSCRIPTEN__
+/* RVIP stand-ins: gents with an empty slot in tileset.png get a
+   sprite from the same sheet (never text, never another set) */
+static gent_t web_top_gent(const gent_t gent)
+{
+  static const gent_t stand_in[][2] = {
+    { gent_amulet, gent_crown }, { gent_beetle_shell, gent_carcass },
+    { gent_bone_dust, gent_bone }, { gent_caeltzan, gent_necromancer },
+    { gent_chickpeas, gent_bread }, { gent_cranium, gent_decapitated_head },
+    { gent_eyeball, gent_floating_brain }, { gent_falafel, gent_bread },
+    { gent_fish, gent_carcass }, { gent_lognac, gent_goatman },
+    { gent_mandrake_root, gent_mushroom }, { gent_meat, gent_carcass },
+    { gent_mummy_wrapping, gent_robe }, { gent_prod, gent_staff },
+    { gent_sausage, gent_cheese }, { gent_ybznek, gent_nameless_horror } };
+  unsigned int k;
+
+  for (k = 0; k < sizeof(stand_in) / sizeof(stand_in[0]); k++)
+    if (stand_in[k][0] == gent) return stand_in[k][1];
+  return gent;
+}
+
+/*
+  RVIP: the Visible window. What draw_level() shows in view: lines
+  "M<glyph><name>\t\t<tile>" per creature, "I..." per item; tile =
+  own-set gent | tsl-go sprite << 10 (255 = none). Sent when changed.
+*/
+void web_send_visible(void)
+{
+  static char * last = NULL;
+  static char buf[8192];
+  size_t len = 0;
+  level_t * level = get_current_level();
+  unsigned int i;
+  creature_t * c;
+  item_t * item;
+
+  buf[0] = '\0';
+
+  for (i = 0; i < level->creatures; i++)
+  {
+    c = level->creature[i];
+
+    if (c == NULL || is_player(c) || c->detected == false ||
+	can_see_creature(game->player, c) == false)
+      continue;
+
+    web_visible_line(buf, &len, sizeof(buf), 'M', c->gent, c->name_one);
+  }
+
+  for (item = level->first_item; item != NULL; item = item->next_item)
+  {
+    char * name;
+
+    if (on_map(level, item->y, item->x) == false ||
+	get_tile(level, item->y, item->x) == tile_forcefield ||
+	can_see(game->player, item->y, item->x) == false)
+      continue;
+
+    name = get_item_name(item);
+    web_visible_line(buf, &len, sizeof(buf), 'I', item->gent, name);
+    free(name);
+  }
+
+  if (last != NULL && strcmp(last, buf) == 0)
+    return;
+
+  free(last);
+  last = mydup(buf);
+  web_visible(buf);
+}
+#endif
