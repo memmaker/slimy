@@ -18,6 +18,11 @@
 #include "losegame.h"
 #include "burdened.h"
 
+/* RVIP: the eat sound goes with "You eat ...", before any lethal effect */
+#undef EAT_MSG
+#define EAT_MSG sprintf(line, "You eat %s.", name); queue_msg(line); \
+  if (is_player(creature)) RVIP_SOUND("eat");
+
 
 /*
   Makes CREATURE eat ITEM. ITEM will be destroyed. Returns true if the
@@ -151,9 +156,6 @@ blean_t eat(creature_t * creature, item_t * item)
     queue_msg("You can't eat that!");
     return false;
   }
-
-  if (is_player(creature))
-    RVIP_SOUND("eat");
 
   if (item->inventory == creature)
   {

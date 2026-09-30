@@ -48,8 +48,18 @@ blean_t equip_item(item_t * item)
   if (item->equipped)
     return false; /* It is... */
 
+  /* RVIP: one "wear" per turn (auto-equip puts on weapon and ammo) */
   if (player)
-    RVIP_SOUND("wear");
+  {
+    static long rv_wear_turn = -1;
+
+    if (game == NULL || (long)game->turns != rv_wear_turn)
+    {
+      if (game != NULL)
+	rv_wear_turn = (long)game->turns;
+      RVIP_SOUND("wear");
+    }
+  }
   
   /*
     If we're equipping ammo, remove any launcher present if it isn't
