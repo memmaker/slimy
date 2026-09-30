@@ -6,6 +6,8 @@
 #include "main.h"
 #include "stuff.h"
 #include "message.h"
+
+unsigned int msg_counter = 0;
 #include "ui.h"
 
 
@@ -59,6 +61,9 @@ void queue_msg(const char * text)
   /* Zero-length messages won't be displayed anyway */
   if (strlen(text) == 0)
     return;
+
+  /* RVIP explore: counts every message queued, for the explore stop. */
+  msg_counter++;
 
   /* Allocate memory for the new message */
   new_msg = malloc(sizeof(message_t));
@@ -285,6 +290,15 @@ void _msgflush_internal(const blean_t force_wait)
       wait = true;
     }
 
+#ifdef RVIP_AUTO_MORE
+    /* RVIP: no [MORE] stops; the full text stays in the history (P). */
+    if (wait)
+    {
+      mb_flush();
+      l = 0;
+    }
+    else
+#else
     if (wait)
     {
       /* We should display a "more" marker and pause on this line. */
@@ -295,6 +309,7 @@ void _msgflush_internal(const blean_t force_wait)
       l = 0;
     }
     else
+#endif
     {
       mb_flush();
 

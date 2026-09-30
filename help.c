@@ -388,12 +388,13 @@ void display_legend(void)
   unsigned int temp;
   unsigned int attr;
   gent_t gent;
-  char line[1000];
+  char line[1600];
   char map[400];
   char label_inspect[6];
   char label_close[6];
   char label_recenter[6];
   char label_stairs[6];
+  char label_explore[6];
   blean_t console;
 
 /*  t = 2;
@@ -523,9 +524,10 @@ void display_legend(void)
 
   key_help(label_inspect,   true, action_inspect);
   key_help(label_stairs,    true, action_stairs);
+  key_help(label_explore,   true, action_explore);
   key_help(label_close,     true, action_close);
   key_help(label_recenter,  true, action_recenter);
-  sprintf(line, "The left half of the screen holds the level map. Map features such as walls, doors and traps will be memorized, but creatures and items are only displayed inside your field of view. \n \n Press %s to inspect a tile (describe what is there) or scroll the map view. \n \n DOORS are opened by \"bumping\" into them. Some doors require keys, or you can attempt to break them. Close a door with %s. \"Bump\" into walls to search for secret doors (once is enough). \n \n STAIRS will take you to another level. Press %s to climb. \n \n", label_inspect, label_close, label_stairs);
+  sprintf(line, "The left half of the screen holds the level map. Map features such as walls, doors and traps will be memorized, but creatures and items are only displayed inside your field of view. \n \n Press %s to inspect a tile (describe what is there) or scroll the map view. \n \n DOORS are opened by \"bumping\" into them. Some doors require keys, or you can attempt to break them. Close a door with %s. \"Bump\" into walls to search for secret doors (once is enough). \n \n STAIRS will take you to another level. Press %s to climb. Away from stairs, < and > walk to the nearest known staircase leading up or down and stop on it; press again to climb. \n \n Press %s to explore: you walk towards unexplored places until a creature or a new item comes into view, something happens or you press a key. Known traps and locked doors are avoided. \n \n", label_inspect, label_close, label_stairs, label_explore);
   constrained_wrap(2, 40, 40, line);
 
   return;
@@ -556,7 +558,7 @@ void key_reference()
   strcat(layout, "$su..- wait (pass) one turn        | $rg.. - redraw the screen                  ");
   strcat(layout, "$sv..- traverse stairs             | $rh.. - message history                    ");
   strcat(layout, "$sx..- close adjacent door         | $ri.. - flip status display                ");
-  strcat(layout, "                                   | $rj.. - character summary                  ");
+  strcat(layout, "$sK..- auto-explore                | $rj.. - character summary                  ");
   strcat(layout, "$sy..- browse inventory            | $rk.. - inspect a tile                     ");
   strcat(layout, "$sB..- use item                    | $rl.. - interact with environment          ");
   strcat(layout, "$sz..- pick up   $sA..- drop       | $rJ.. - change options                     ");
@@ -638,6 +640,7 @@ void key_reference()
 	  case 'H': action = action_ability; break;
 	  case 'I': action = action_ability_config; break;
 	  case 'J': action = action_options; break;
+	  case 'K': action = action_explore; break;
 	  case 'M': action = action_fire_n; break;
 	  case 'N': action = action_fire_ne; break;
 	  case 'O': action = action_fire_e; break;

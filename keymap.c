@@ -133,6 +133,7 @@ void common_keys()
 
   bind_key(action_stairs,     '>');
   bind_key(action_stairs,     '<');
+  bind_key(action_explore,    'x');
 
   bind_key(action_help,       '?');
   bind_key(action_help,       kt_f1);

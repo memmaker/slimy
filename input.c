@@ -220,6 +220,7 @@ action_t string_to_action(const char * name)
   else if (mycmp(name, "wait")) return action_wait;
   else if (mycmp(name, "select")) return action_select;
   else if (mycmp(name, "stairs")) return action_stairs;
+  else if (mycmp(name, "explore")) return action_explore;
   else if (mycmp(name, "redraw")) return action_redraw;
   else if (mycmp(name, "fire")) return action_fire;
   else if (mycmp(name, "use")) return action_use;

@@ -234,6 +234,20 @@ int getch(void)
   kq_head = (kq_head + 1) % KQ;
   return k;
 }
+
+/* RVIP explore: take a pending key without blocking (-1: none). */
+int web_poll_key(void)
+{
+  int k;
+  if (kq_head == kq_tail) return -1;
+  k = kq[kq_head];
+  kq_head = (kq_head + 1) % KQ;
+  return k;
+}
+
+void web_pause(int ms) { emscripten_sleep(ms); }
 #else
 int getch(void) { int c = getchar(); return c == EOF ? 27 : c; }
+int web_poll_key(void) { return -1; }
+void web_pause(int ms) { (void)ms; }
 #endif

@@ -49,6 +49,7 @@
 #include "web.h"
 #include "dwiminv.h"
 #include "craft.h"
+#include "explore.h"
 
 
 /*
@@ -72,6 +73,8 @@ void player_control(creature_t * creature)
   unsigned int x;
 
   action_t input;
+  key_token_t last_key;
+  int mode;
 
   game->turns++;
 
@@ -123,7 +126,20 @@ void player_control(creature_t * creature)
     display_stats(creature);
 
     msgflush_nowait();
-    input = get_action();
+
+    /* RVIP: an armed explore/stairs walk supplies the next move. */
+    input = action_undefined;
+    last_key = 0;
+
+    if (explore_mode != EXPLORE_OFF)
+      input = explore_step(creature);
+
+    if (input == action_undefined)
+    {
+      last_key = get_keypress();
+      input = key_to_action(last_key);
+    }
+
     clear_msgbar();
     
     /* Check which actions are allowed if the player is shapeshifted. */
@@ -474,9 +490,31 @@ void player_control(creature_t * creature)
 	continue;
 	
       case action_stairs:
-	if (stairs(creature, true))
-	  return;
+	/*
+	  RVIP: '<' and '>' take the stairs here when they go that way,
+	  else walk to the nearest known staircase of that kind and stop
+	  there (press again to take it). Other stairs keys take any.
+	*/
+	if (last_key == '<')
+	  mode = EXPLORE_STAIRS_UP;
+	else if (last_key == '>')
+	  mode = EXPLORE_STAIRS_DOWN;
+	else
+	  mode = EXPLORE_STAIRS_ANY;
 
+	if (explore_on_stairs(mode))
+	{
+	  if (stairs(creature, true))
+	    return;
+
+	  continue;
+	}
+
+	explore_start(mode);
+	continue;
+
+      case action_explore:
+	explore_start(EXPLORE_ON);
 	continue;
 
       case action_save:

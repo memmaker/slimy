@@ -135,7 +135,8 @@ enum action_t
   action_help,
   action_save,
   action_options,
-  action_apply
+  action_apply,
+  action_explore
 };
 typedef enum action_t action_t;
 

@@ -5,6 +5,7 @@ rm tsl 2>/dev/null
 
 gcc -DTSL_CONSOLE  \
 	main.c \
+	explore.c \
 	web.c \
 	dwiminv.c \
 	mt19937ar.c \

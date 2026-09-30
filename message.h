@@ -45,6 +45,8 @@ void clear_msgbar(void);
 void msg_glue(const char * s1, const char * s2);
 
 #define msgflush_wait()    _msgflush_internal(true)
+extern unsigned int msg_counter;
+
 #define msgflush_nowait()  _msgflush_internal(false)
 
 #endif
