@@ -235,6 +235,7 @@
 		var f = audio.cfg[name];
 		if (!f || !f.length || !window.RVIPSound) return;
 		audio.played++;
+		RVIPSound.pitch(0.05);   /* ±5% random pitch, opt-in in rvip-sound.js */
 		RVIPSound.play([f], 0.6);   /* one of the event's variants at random */
 	}
 
