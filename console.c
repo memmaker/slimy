@@ -313,14 +313,24 @@ void map_move(const unsigned int y, const unsigned int x)
 #ifdef __EMSCRIPTEN__
 static gent_t web_top_gent(const gent_t gent);
 
-static void web_visible_line(char * buf, size_t * len, size_t cap, char kind, gent_t g, const char * name)
+/* RVIP: a gent's icon for the Inventory/Visible windows: own-set gent
+   (stand-ins applied) | tsl-go sprite << 10 (255 = none); its text glyph */
+unsigned int web_gent_tile(gent_t g)
+{
+  unsigned int t2 = tslgo_gent[g] >= 253 ? 255 : tslgo_gent[g];
+  return (unsigned int)web_top_gent(g) | (t2 << 10);
+}
+
+char web_gent_glyph(gent_t g)
 {
   unsigned int ch = glyph_map[g] & A_CHARTEXT;
-  unsigned int t2 = tslgo_gent[g] >= 253 ? 255 : tslgo_gent[g];
+  return (ch > 32 && ch < 127) ? (char)ch : '?';
+}
 
+static void web_visible_line(char * buf, size_t * len, size_t cap, char kind, gent_t g, const char * name)
+{
   if (*len + strlen(name) + 32 < cap)
-    *len += sprintf(buf + *len, "%c%c%s\t\t%u\n", kind, (ch > 32 && ch < 127) ? (char)ch : '?',
-		    name, (unsigned int)web_top_gent(g) | (t2 << 10));
+    *len += sprintf(buf + *len, "%c%c%s\t\t%u\n", kind, web_gent_glyph(g), name, web_gent_tile(g));
 }
 #endif
 

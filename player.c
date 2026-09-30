@@ -71,9 +71,12 @@ void web_inventory(const char * t);
 #ifdef __EMSCRIPTEN__
 /*
   RVIP: the Inventory window. One line per carried item in letter
-  order, "letter TAB name TAB class" (class "eq" = equipped, with TSL's
+  order, "letter TAB name TAB class TAB glyph TAB tile" (class "eq" = equipped, with TSL's
   own in-use text appended); sent only when it changed.
 */
+unsigned int web_gent_tile(gent_t g);
+char web_gent_glyph(gent_t g);
+
 static void web_send_inventory(const creature_t * creature)
 {
   static char * last = NULL;
@@ -99,8 +102,9 @@ static void web_send_inventory(const creature_t * creature)
 	in_use_str(use, item);
 
       if (len + strlen(name) + 40 < sizeof(buf))
-	len += sprintf(buf + len, "%c\t%s%s%s\t%s\n", item->letter, name,
-		       use[0] ? " " : "", use, item->equipped ? "eq" : "");
+	len += sprintf(buf + len, "%c\t%s%s%s\t%s\t%c\t%u\n", item->letter, name,
+		       use[0] ? " " : "", use, item->equipped ? "eq" : "",
+		       web_gent_glyph(item->gent), web_gent_tile(item->gent));
 
       free(name);
     }

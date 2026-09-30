@@ -144,20 +144,52 @@
 
 	/* ---------- Visible window: RvipWM.visible, icons from the chosen set (tile = own gent | tsl-go << 10) ---------- */
 	var lastVis = '';
-	function visIcon(t) {
+	/* a tile icon of side px from the chosen set (null in text mode or without a sprite) */
+	function tileIcon(t, px) {
 		if (!tilesOn()) return null;
 		var d = document.createElement('span'), go = L.tiles === 'tsl-go', n = go ? t >> 10 : t & 1023;
 		if (go && n === 255) return null;
-		d.style.cssText = 'display:inline-block;width:16px;height:16px;vertical-align:-3px;image-rendering:pixelated;background-repeat:no-repeat;' +
-			(go ? 'background-image:url(tslgo-sprites.png);background-size:256px 240px;background-position:' + -(n % 16) * 16 + 'px ' + -(n >> 4) * 16 + 'px'
-				: 'background-image:url(tileset.png);background-size:269.6px 666.4px;background-position:' + -(1 + (n % 16) * 21) * 0.8 + 'px ' + -(161 + (n >> 4) * 21) * 0.8 + 'px');
+		var k = px / (go ? 32 : TILE), x = go ? (n % 16) * 32 : 1 + (n % 16) * 21, y = go ? (n >> 4) * 32 : 161 + (n >> 4) * 21;
+		d.style.cssText = 'display:inline-block;width:' + px + 'px;height:' + px + 'px;vertical-align:middle;image-rendering:pixelated;background-repeat:no-repeat;' +
+			'background-image:url(' + (go ? 'tslgo-sprites.png' : 'tileset.png') + ');background-size:' + (go ? 512 : 337) * k + 'px ' + (go ? 480 : 833) * k + 'px;' +
+			'background-position:' + -x * k + 'px ' + -y * k + 'px';
 		return d;
 	}
-	var visSet;
+	function visIcon(t) { return tileIcon(t, 16); }
+	var visSet, invKey;
 	function drawVis() {   /* RvipWM.visible skips an unchanged list; a set switch forces the icons */
 		var b = $('vis'), set = tilesOn() ? L.tiles : '';
 		if (set !== visSet) { visSet = set; b._vis = null; }
 		RvipWM.visible(b, lastVis, visIcon);
+		drawInv();
+	}
+
+	/* ---------- Inventory window: lines "letter\tname\tclass\tglyph\ttile" from player.c ---------- */
+	/* tiles on: "a) [icon] name", icon centred on columns 2-4, side min(2 columns, row height);
+	 * text: "a) ! name" with the item's own glyph */
+	var lastInv = '';
+	function drawInv() {
+		var b = $('inv'), on = tilesOn(), fs = RvipWM.fontSize('inv'), key = lastInv + (on ? L.tiles : '') + fs + L.face;
+		if (key === invKey) return;
+		invKey = key;
+		b.textContent = '';
+		var m = document.createElement('span'); m.textContent = 'MMMMMMMMMM'; b.appendChild(m);
+		var cw = m.offsetWidth / 10, side = Math.floor(Math.min(2 * cw, fs * 1.45)); b.textContent = '';
+		lastInv.split('\n').forEach(function (l) {
+			if (!l) return;
+			var f = l.split('\t'), d = document.createElement('div'), k = document.createElement('b');
+			k.textContent = f[0] + ')';
+			d.appendChild(k);
+			var ic = f[4] !== undefined && tileIcon(+f[4], side);
+			if (ic) {
+				var box = document.createElement('span');
+				box.style.cssText = 'display:inline-block;width:' + 3 * cw + 'px;text-align:center';
+				box.appendChild(ic); d.appendChild(box); d.appendChild(document.createTextNode(f[1]));
+			} else d.appendChild(document.createTextNode(' ' + (f[3] || ' ') + ' ' + f[1]));
+			if (f[2]) d.className = f[2];
+			b.appendChild(d);
+		});
+		if (!b.firstChild) { var e = document.createElement('div'); e.textContent = '(nothing)'; b.appendChild(e); }
 	}
 
 	/* ---------- one-window mode: the console build's whole 80x24 terminal (port/wcurses.c), font fitted ---------- */
@@ -190,7 +222,7 @@
 			state: L.wm,
 			save: function (st) { L.wm = st; saveLayout(); },
 			layout: function (r) { rects = r; fitTerm(); redrawMap(); if (!$('pop').hidden) popShow(true); var mb = $('msg').parentNode; mb.scrollTop = mb.scrollHeight; },
-			zoom: { map: function () { redrawMap(); }, msg: function () { if (!$('pop').hidden) popShow(true); } },
+			zoom: { inv: function () { drawInv(); }, map: function () { redrawMap(); }, msg: function () { if (!$('pop').hidden) popShow(true); } },
 			size: { map: function () { return 16; } },
 			fontMax: { map: 19 },
 			onReset: function () { redrawMap(); }
@@ -292,19 +324,7 @@
 		onAbort: function (what) { app.crashed(what); },
 		rvipSound: function (e) { sound(e); },
 		rvipLog: function (t) { RvipWM.log($('log'), t); },   /* each game message as flushed (message.c) */
-		rvipInv: function (s) {                                /* lines "letter\tname\tclass" from player.c */
-			var b = $('inv');
-			b.textContent = '';
-			s.split('\n').forEach(function (l) {
-				if (!l) return;
-				var f = l.split('\t'), d = document.createElement('div'), t = document.createElement('span'), k = document.createElement('b');
-				k.textContent = f[0] + ') ';
-				t.appendChild(k); t.appendChild(document.createTextNode(f[1])); d.appendChild(t);
-				if (f[2]) d.className = f[2];
-				b.appendChild(d);
-			});
-			if (!b.firstChild) { var e = document.createElement('div'); e.textContent = '(nothing)'; b.appendChild(e); }
-		},
+		rvipInv: function (s) { lastInv = s; drawInv(); },   /* player.c web_send_inventory */
 		rvipVis: function (s) { lastVis = s; drawVis(); },   /* creatures + items in view, from console.c */
 		rvipName: playerName,
 		rvipLevel: function (i) { music.level = i; musicUpdate(); },
