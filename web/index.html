@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Slimy Lichmummy</title>
+<!-- Stage-1 page: plain panes, no rvip-wm yet (stage 5). -->
+<style>
+body { background:#000; color:#ccc; font:16px monospace; margin:8px; }
+#game { display:grid; grid-template-columns: 40ch 40ch; gap:0 1ch; }
+pre { margin:0; line-height:1.15; white-space:pre; }
+#screen { position:absolute; top:8px; left:8px; background:#000; min-width:80ch; min-height:24em; display:none; }
+.rv { background:#ccc; color:#000; }
+.bd { font-weight:bold; }
+.dm, .c7 { color:#666; }
+.c1 { color:#c90; } .c2 { color:#46f; } .c3 { color:#e33; }
+.c4 { color:#3c3; } .c5 { color:#3cc; } .c6 { color:#c3c; }
+</style>
+</head>
+<body>
+<div id="game">
+  <div><pre id="map"></pre><pre id="msg"></pre></div>
+  <pre id="status"></pre>
+</div>
+<pre id="screen"></pre>
+<script>
+var panes = ['map', 'status', 'msg', 'screen'];
+window.slimyShadow = {};
+var Module = {
+  rvipPane: function (pane, html, rows) {
+    var id = panes[pane];
+    document.getElementById(id).innerHTML = html;
+    var tmp = document.createElement('div'); tmp.innerHTML = html;
+    slimyShadow[id] = tmp.textContent;
+    var scr = document.getElementById('screen');
+    if (pane === 3) scr.style.display = rows > 0 ? 'block' : 'none';
+    else if (pane === 0) scr.style.display = 'none';
+  }
+};
+var keyMap = { ArrowUp:259, ArrowDown:258, ArrowLeft:260, ArrowRight:261,
+  Escape:27, Enter:10, Backspace:8, Tab:9 };
+document.addEventListener('keydown', function (e) {
+  var k = keyMap[e.key];
+  if (k === undefined && e.key.length === 1) {
+    k = e.key.charCodeAt(0);
+    if (e.ctrlKey) k &= 0x1f;
+  }
+  if (k === undefined || !Module._web_key) return;
+  e.preventDefault();
+  Module._web_key(k);
+});
+</script>
+<script src="slimy.js"></script>
+</body>
+</html>
