@@ -1,6 +1,47 @@
 # The Slimy Lichmummy — handover
 
 ## RVIP progress
+- **Open-problems pass (2026-09-30, cloud):**
+  - Autosave (web only, saveload.c `web_autosave`): `write_save_atomic()` shared
+    with S; `player_control` saves at the idle prompt when
+    `web_autosave_pending` (set at start and in `change_level`, game.c) and no
+    key is queued (`web_keys_pending`); `web_autosave_delete()` after
+    `run_report` in death/quit and win. No timer/hide save (RVIP 5.10: only
+    level changes). Tested: save present after start and reload ("welcome
+    back"), mtime renewed on each stairs trip, removed at death (END save=0).
+  - Hero name: `web_player_name()` (EM_JS -> `Module.rvipName`) in
+    `create_character` replaces `web_user`; the page asks once at the first
+    game start (`window.prompt`, `/slimy/web-name`, blank = TSL's "player");
+    the beacon reads the same file. Tested: "Hello Tester, welcome to TSL!",
+    beacon name=Outbox from the start prompt.
+  - New rvip-wm windows **Inventory** (`#inv`, player.c
+    `web_send_inventory`: letter order, TSL in-use text, class `eq`, sent on
+    change) and **Message log** (`#log`, each message as flushed via
+    `web_log_msg` in message.c, `RvipWM.log` folds repeats). Default layout:
+    right column Status / Inventory / Message log; saved layouts without
+    `inv` fall back to it once. TSL's in-status browser untouched. No
+    `RvipWM.prompt`: TSL has its own message-bar pane (the prompt line is for
+    games that write prompts onto the map). Messages have no colour in TSL
+    (monochrome bar), so log lines carry none.
+  - Explore: a message identical to one of the last flush's texts doesn't
+    bump `msg_counter` (bleeding x4 walked on, stopped on "something new");
+    first step onto stairs/items that aren't the target is swapped for an
+    equally short plain step (`ex_side_step`, reverse BFS). Side effect: an
+    identical repeated hit message from an unseen attacker no longer stops
+    explore (seen monsters still do).
+  - Sounds: `wear` once per game turn (auto-equip weapon+ammo); `eat` moved into
+    `EAT_MSG` (before lethal effects). Tested (scratch build, hooks via
+    `Module.rvTest`): stairs, spell + teleport (Teleport ability), shoot, hit,
+    hurt, kill, eat -> death order. Inventory reopen after eating one of two
+    breads: browser reopened on the remaining bread.
+  - Shrine draft at 375 px with roguelikes `shrine.css`: no overflow, no
+    inner scrollers (screenshot OK); saving text updated. Outbox: beacon 503
+    -> kept in IndexedDB, resent after reload with 204, outbox empty.
+  - Mouse: not added (siblings Avanor/rogue3.6 have no row clicks).
+  - Shared tests smoke/idbtest/resize pass with the 5 windows, no errors.
+- **Open problems now:** publishing/licence (author, tsl-go assets); Mac pane
+  look (new windows, sounds heard); real win path (Chapel win trap) unplayed;
+  one-window mode is the same windows without title bars; no Visible window.
 - **PUBLISHING BLOCKER (tsl-go assets, 2026-09-30):** the user asked to add
   the tiles and sounds of github.com/c0ze/tsl-go (Go port of TSL, @0c62dcf).
   Licence check: the repo has no licence of its own ("The Go port is offered

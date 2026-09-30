@@ -34,3 +34,9 @@
 - 5.8/5.11: check a third-party port's asset licences per directory: tsl-go mixes CC0 (DCSS) with unlicensed AI-generated sprites and music (TSL).
 - 5.11: a port whose SFX are Web Audio recipes (tsl-go `sfx`: oscillator glide + biquad-filtered noise + exp envelope) can be rendered to wav at build time with the same parameters (stdlib Python, RBJ biquad), keeping the one-wav-per-event player (TSL `web/mksounds.py`).
 - 5.11: level music from C: send the level index on change from the map draw (`web_level`), page maps index -> track and creates the Audio only when Music is on (TSL).
+- 5.10: a save-deleted-on-load game (TSL) gets a web autosave by splitting the save routine into write-only + exit; save at the idle prompt after start and each level change (flag + no queued keys), delete it right after the run report on death/quit/win (TSL).
+- 5.14: ask the player name at the first game start (EM_JS reading the IDBFS name file, `window.prompt` once) and pass it into the game's own name setter, so in-game texts and the beacon agree (TSL, replaced `web_user`).
+- 5.6: explore's new-message stop: skip messages identical to one of the last flush's texts (status repeated each turn, TSL "You are bleeding!"); swap a first step onto stairs/items for an equal-length plain one via a reverse BFS from the target (TSL).
+- 5.11: auto-equip that equips weapon and ammo in one action plays the equip sound twice: gate it to once per game turn (TSL).
+- 5.16: RvipApp.dir follows the URL folder: a scratch build served as `slimyt/` saves under `/slimyt`, not `/slimy`; read paths via `RvipApp.dir` in tests (TSL).
+- 5.16: scratch test hooks via a JS flag read with `EM_ASM_INT` at the start of the player's turn (immortal, wound + give item, move a monster adjacent, put the hero on stairs, eat a lethal item) reach every sound/end path in seconds (TSL).
