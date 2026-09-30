@@ -1,6 +1,33 @@
 # The Slimy Lichmummy — handover
 
 ## RVIP progress
+- **Mac session (2026-09-30):** pane check done (TSL/tsl-go/None, all
+  windows, A−/A+ per window, Enter menu, `x`, `<`/`>`, help, sound + music
+  fetched/played per event, save-and-quit/resume, quit, death). Fixed:
+  `window.prompt` blocked in the pane crashed the game (try/catch, blank
+  name not stored); tile set None left the canvas over the text map
+  (`canvas[hidden]` CSS); game-over/quit screen blank until a key (shim
+  `getch` now refreshes a touched stdscr, as curses).
+  - Sound variation: shared `rvip-sound.js` (rvip-tools) takes an array =
+    random pick, ±5% random pitch on every sound; `web/mksounds.py` renders
+    3 variants per event (`VARIANTS` freq/length factors), `sounds.json`
+    lists them. Tested: rates 0.95–1.05, all 3 files fetched.
+  - Visible window (`#vis`, `web_send_visible` in console.c, called from
+    `draw_level`): creatures + items in view, `RvipWM.visible`, 16 px icons
+    from the chosen set (tile = own gent | tsl-go << 10). Stand-in table moved
+    into `web_top_gent()`.
+  - One-window mode: shim keeps `newwin` positions and an 80x24 terminal
+    grid (last refresh wins), sent as pane 4 -> window `term` ("Whole
+    screen"), `single: 'term'`, `noFont`, `fitTerm()` fits the font.
+  - Real win: scratch build (hero put next to the Chapel `trap_win`, bot
+    steps on it) -> "You ascend to demigodhood", `ev=win&depth=6&turns=4`.
+    Death (health 1): `ev=death&killer=gnoblin&depth=1&turns=53`, game-over
+    screen shown, Enter -> new game.
+  - Lessons moved into RVIP.md part 5 (LESSONS.md removed); TSL in part 3.
+- **Open problems now:** publishing (licence: contact Ulf Åström; tsl-go
+  AI sprites + music unlicensed); stage 7/8/9 public steps below; inventory
+  icons (RVIP content rule) not done; the Whole screen window also shows in
+  the multi-window list (harmless).
 - **Open-problems pass (2026-09-30, cloud):**
   - Autosave (web only, saveload.c `web_autosave`): `write_save_atomic()` shared
     with S; `player_control` saves at the idle prompt when
@@ -39,9 +66,6 @@
     -> kept in IndexedDB, resent after reload with 204, outbox empty.
   - Mouse: not added (siblings Avanor/rogue3.6 have no row clicks).
   - Shared tests smoke/idbtest/resize pass with the 5 windows, no errors.
-- **Open problems now:** publishing/licence (author, tsl-go assets); Mac pane
-  look (new windows, sounds heard); real win path (Chapel win trap) unplayed;
-  one-window mode is the same windows without title bars; no Visible window.
 - **PUBLISHING BLOCKER (tsl-go assets, 2026-09-30):** the user asked to add
   the tiles and sounds of github.com/c0ze/tsl-go (Go port of TSL, @0c62dcf).
   Licence check: the repo has no licence of its own ("The Go port is offered
