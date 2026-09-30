@@ -18,8 +18,8 @@ Config: `tsl_conf_example`, `tsl_conf_dvorak` (keymaps). Help: in-game `?`
 (spider webs), not a web frontend.
 
 Source: https://gitlab.com/vitaly-zdanevich/the-slimy-lichmummy (a 2025 upload
-from archive.org ArchiveRL.7z; 5 commits). `origin` = that GitLab repo,
-`memmaker` = this private repo. Commit 1 of the upstream history is the pristine tree.
+from archive.org ArchiveRL.7z; 5 commits; add it as remote `upstream`). `origin` = this private repo
+(memmaker/slimy-cloud). Commit 1 of the upstream history is the pristine tree.
 
 ## License — not free software (read `LICENSE.TXT`)
 Unmodified source may be redistributed; "unofficial patches or ports" are
@@ -48,7 +48,7 @@ Stage 1: decide curses shim (console frontend) vs. an own frontend replacing
 `allui.c` (tiles); the port needs both text and the own tileset, so likely the
 console path for game logic plus RVIP tiles from `tileset.png`. Report it.
 Work stage by stage (1 → 9). Per stage: checkpoint (test, `HANDOVER.md`
-`## RVIP progress`, commit `RVIP: stage N <topic>`, **push** to `memmaker`).
+`## RVIP progress`, commit `RVIP: stage N <topic>`, **push** to `origin`).
 One topic per commit; never force-push.
 
 ## TSL specifics
