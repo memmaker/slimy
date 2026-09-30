@@ -171,7 +171,7 @@
 
 	/* ---------- sound ---------- */
 	/* events come from game actions (RVIP_SOUND in the C code -> web_sound ->
-	 * Module.rvipSound); web/mksounds.py synthesizes one wav per event,
+	 * Module.rvipSound); web/mksounds.py synthesizes 3 wavs per event,
 	 * rvip-sound.js plays them. Off by default; nothing is fetched until
 	 * Sound effects is on. Events tsl-go has use its recipes (mksounds.py).
 	 * Music: tsl-go's recorded track per level (music/<level>.mp3), off by
@@ -205,7 +205,7 @@
 		var f = audio.cfg[name];
 		if (!f || !f.length || !window.RVIPSound) return;
 		audio.played++;
-		RVIPSound.play([f[0]], 0.6);
+		RVIPSound.play([f], 0.6);   /* one of the event's variants at random */
 	}
 
 	/* ---------- saves (IDBFS at RvipApp.dir = $HOME of the game) ---------- */

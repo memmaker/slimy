@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
-"""Synthesize The Slimy Lichmummy's sound effects at build time: one <event>.wav per RVIP_SOUND("event")
-in the game (*.c, asserted) into <out>, plus <out>/sounds.json {event: [file]}.
+"""Synthesize The Slimy Lichmummy's sound effects at build time: 3 variants per RVIP_SOUND("event")
+in the game (*.c, asserted), <event>.wav, <event>-2.wav, <event>-3.wav (pitch/length
+factors VARIANTS, fresh noise each), into <out>, plus <out>/sounds.json {event: [files]}
+(rvip-sound.js picks one at random).
 TSL ships no audio upstream, so these are made for it; events that tsl-go
 (c0ze's Go port) has use its recipes (TSLGO below). Stdlib only.
 Usage (repo root): python3 web/mksounds.py <out>"""
@@ -8,9 +10,12 @@ import glob, json, math, os, random, re, struct, sys, wave
 
 R = 22050
 rnd = random.Random(2012)
+FK = DK = 1.0   # frequency and duration factors of the variant being rendered
+VARIANTS = [(1.0, 1.0), (.94, 1.08), (1.06, .92)]
 
 def tone(f0, f1, dur, vol=.45, dec=2.0, fm=1.0):
     """sine with a 2:1 modulator; fm = modulation depth (0 = pure sine)"""
+    f0, f1, dur = f0 * FK, f1 * FK, dur * DK
     out, ph, n = [], 0.0, int(R * dur)
     for i in range(n):
         t = i / n
@@ -20,7 +25,7 @@ def tone(f0, f1, dur, vol=.45, dec=2.0, fm=1.0):
     return out
 
 def noise(dur, vol=.5, dec=2.0, lp=.3, swell=False):
-    out, y, n = [], 0.0, int(R * dur)
+    out, y, n = [], 0.0, int(R * dur * DK)
     for i in range(n):
         t = i / n
         y += lp * (rnd.uniform(-1, 1) - y)          # one-pole low-pass: small lp = duller
@@ -67,6 +72,7 @@ def _env(i, n, peak):
     return max(peak, .0002) * (0.0001 / max(peak, .0002)) ** ((t - a) / max(d - a, 1e-3))
 
 def g_tone(t0, typ='sine', f0=440, f1=None, dur=.1, gain=.2):
+    t0, f0, f1, dur = t0 * DK, f0 * FK, f1 and f1 * FK, dur * DK
     n, ph, out = int(R * dur), 0.0, [0.0] * int(R * t0)
     for i in range(n):
         f = f0 * ((f1 or f0) / f0) ** (i / n)
@@ -77,6 +83,7 @@ def g_tone(t0, typ='sine', f0=440, f1=None, dur=.1, gain=.2):
     return out
 
 def g_noise(t0, dur=.1, gain=.2, typ='bandpass', freq=1000, f1=None, q=1.0):
+    t0, dur, freq, f1 = t0 * DK, dur * DK, freq * FK, f1 and f1 * FK
     n, out = int(R * dur), [0.0] * int(R * t0)
     x1 = x2 = y1 = y2 = 0.0
     for i in range(n):
@@ -121,9 +128,13 @@ assert events and events <= set(SOUNDS), 'events without a sound: %s' % sorted(e
 
 out = sys.argv[1]
 os.makedirs(out, exist_ok=True)
+files = {}
 for ev in sorted(events):
-    s = SOUNDS[ev]()
-    with wave.open(os.path.join(out, ev + '.wav'), 'wb') as w:
-        w.setnchannels(1); w.setsampwidth(2); w.setframerate(R)
-        w.writeframes(b''.join(struct.pack('<h', int(max(-1, min(1, x)) * 32000)) for x in s))
-json.dump({ev: [ev + '.wav'] for ev in sorted(events)}, open(os.path.join(out, 'sounds.json'), 'w'))
+    files[ev] = []
+    for v, (FK, DK) in enumerate(VARIANTS):
+        s, name = SOUNDS[ev](), ev + ('-%d' % (v + 1) if v else '') + '.wav'
+        with wave.open(os.path.join(out, name), 'wb') as w:
+            w.setnchannels(1); w.setsampwidth(2); w.setframerate(R)
+            w.writeframes(b''.join(struct.pack('<h', int(max(-1, min(1, x)) * 32000)) for x in s))
+        files[ev].append(name)
+json.dump(files, open(os.path.join(out, 'sounds.json'), 'w'))
