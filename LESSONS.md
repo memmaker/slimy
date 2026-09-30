@@ -32,3 +32,5 @@
 - 5.8: a second tile set with a different grid (TSL own 20 px vs tsl-go 32 px atlas): C computes one code per set in the same map hook and the shim sends both arrays; JS picks by the stored set name, so switching needs no C round trip (TSL).
 - 5.8: a port's atlas index (tsl-go `sprites.js`: name -> x,y, level themes) is a ready name table: vendor it unchanged as generator input, map gent -> name by hand, emit a C header (TSL `web/mktslgo.py`).
 - 5.8/5.11: check a third-party port's asset licences per directory: tsl-go mixes CC0 (DCSS) with unlicensed AI-generated sprites and music (TSL).
+- 5.11: a port whose SFX are Web Audio recipes (tsl-go `sfx`: oscillator glide + biquad-filtered noise + exp envelope) can be rendered to wav at build time with the same parameters (stdlib Python, RBJ biquad), keeping the one-wav-per-event player (TSL `web/mksounds.py`).
+- 5.11: level music from C: send the level index on change from the map draw (`web_level`), page maps index -> track and creates the Audio only when Music is on (TSL).

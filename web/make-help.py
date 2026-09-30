@@ -144,8 +144,9 @@ walk to the nearest known stairs, <kbd>Enter</kbd> opens a menu of every command
 <kbd>5</kbd> keeps TSL's do-what-I-mean), and the inventory (<kbd>i</kbd>) takes a letter for
 the main action, Shift+letter to drop, Enter for the item menu. The keypad works with
 NumLock on or off.</li>
-<li><strong>Audio ▾:</strong> sound effects made for this port (TSL has no sound of its
-own), off by default; the choice is remembered. There is no music.</li>
+<li><strong>Audio ▾:</strong> sound effects (TSL has no sound of its own): most are
+tsl-go's effects, the rest made for this port; <em>Music</em> plays tsl-go's recorded
+track for each level. Both off by default; the choice is remembered.</li>
 <li>Browsers keep some shortcuts (<kbd>Ctrl+W</kbd>, <kbd>Ctrl+T</kbd>, <kbd>Cmd</kbd> keys on
 a Mac) for themselves.</li>
 <li>If the game crashes, a message appears at the top; reload the page.</li>
@@ -159,7 +160,8 @@ Tiles and fonts are the game's own (fonts: modified Terminus, SIL OFL).</li>
 <li>The second tile set is from <a href="https://github.com/c0ze/tsl-go">c0ze/tsl-go</a>
 by c0ze (tsl.coze.org): tiles from the Dungeon Crawl Stone Soup tileset (CC0; thanks to
 the Crawl and Crawl Stone Soup teams, Eino Keskitalo, David Lawrence Ramsey, Enne Walker,
-Poor_Yurik, Stefan O'Rear and the original RLTiles) plus sprites made for tsl-go.</li>
+Poor_Yurik, Stefan O'Rear and the original RLTiles) plus sprites made for tsl-go. Sound effects (hit, hurt, death, pickup, eat, quaff,
+read, wear, stairs, spell) and the level music are tsl-go's too.</li>
 <li>TSL is not free software: its licence allows redistributing the unmodified
 source and asks that unofficial ports contact the author. Sound effects were
 synthesized for this port. Built with Emscripten.</li>

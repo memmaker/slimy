@@ -17,13 +17,13 @@
 
 	/* ---------- settings: one file in the game's IDBFS folder (no localStorage) ---------- */
 	function loadLayout() {
-		var d = { tiles: 'Tiles', face: '', mapFace: '', audio: { sound: false }, wm: null };
+		var d = { tiles: 'Tiles', face: '', mapFace: '', audio: { sound: false, music: false }, wm: null };
 		try {
 			var s = JSON.parse(Module.FS.readFile(LAYOUT, { encoding: 'utf8' }));
 			if (ORDER.indexOf(s.tiles) >= 0) d.tiles = s.tiles;
 			if (typeof s.face === 'string') d.face = s.face;
 			if (typeof s.mapFace === 'string') d.mapFace = s.mapFace;
-			if (s.audio) d.audio = { sound: s.audio.sound === true };
+			if (s.audio) d.audio = { sound: s.audio.sound === true, music: s.audio.music === true };
 			if (s.wm) d.wm = s.wm;
 		} catch (e) { /* nothing saved yet */ }
 		L = d;
@@ -170,7 +170,23 @@
 	/* events come from game actions (RVIP_SOUND in the C code -> web_sound ->
 	 * Module.rvipSound); web/mksounds.py synthesizes one wav per event,
 	 * rvip-sound.js plays them. Off by default; nothing is fetched until
-	 * Sound effects is on. TSL has no music. */
+	 * Sound effects is on. Events tsl-go has use its recipes (mksounds.py).
+	 * Music: tsl-go's recorded track per level (music/<level>.mp3), off by
+	 * default; the Audio element is made only when Music goes on. */
+	var LEVELS = [null, 'dungeon', 'ominous_cave', 'drowned_city', 'catacombs', 'dragons_lair',
+		'frozen_vault', 'chapel', 'laboratory', 'comm_hub', 'underpass'];   /* places.h LEVEL_* */
+	var music = { el: null, level: -1, src: '' };
+	window.slimyMusic = function () { return music; };
+	function musicUpdate() {
+		var want = L && L.audio.music && LEVELS[music.level] ? 'music/' + LEVELS[music.level] + '.mp3' : '';
+		if (!want) { if (music.el) music.el.pause(); return; }
+		if (!music.el) { music.el = new Audio(); music.el.loop = true; music.el.volume = 0.4; }
+		if (music.src !== want) { music.src = want; music.el.src = want; }
+		music.el.play().catch(function () { /* autoplay: retried on the next key/click */ });
+	}
+	['keydown', 'pointerdown'].forEach(function (t) {
+		document.addEventListener(t, function () { if (music.el && music.el.paused && L && L.audio.music && music.src) music.el.play().catch(function () {}); });
+	});
 	var audio = { cfg: null, loading: false, played: 0 };
 	window.slimyAudio = function () { return audio; };
 	function sound(name) {
@@ -229,6 +245,7 @@
 		setStatus: function (s) { if (s && !app.running) status(s.replace(/\(\d+\/\d+\)/, '').trim() || 'Loading…'); },
 		onAbort: function (what) { app.crashed(what); },
 		rvipSound: function (e) { sound(e); },
+		rvipLevel: function (i) { music.level = i; musicUpdate(); },
 		rvipBeacon: function (ev, killer, depth, turns) {   /* RVIP stage 9: graveyard report, fields from the C side */
 			try {
 				var NF = DIR + '/web-name', name = '';
@@ -284,6 +301,7 @@
 		RvipWM.dropdown($('btn-audio'), $('menu-audio'));
 		RvipWM.dropdown($('btn-file'), $('menu-file'));
 		$('chk-sound').onchange = function () { if (!L) return; L.audio.sound = this.checked; if (this.checked) sound(''); saveLayout(); };
+		$('chk-music').onchange = function () { if (!L) return; L.audio.music = this.checked; saveLayout(); musicUpdate(); };
 		RvipWM.fonts.then(function () {
 			[[$('sel-font'), 'face'], [mapSel, 'mapFace']].forEach(function (a) { RvipWM.fontOptions(a[0]); a[0].value = (L && L[a[1]]) || ''; });
 		}).catch(function () { });
@@ -293,5 +311,5 @@
 		document.querySelectorAll('button').forEach(function (b) { b.addEventListener('mousedown', function (e) { e.preventDefault(); }); });
 	});
 	/* the checkbox reflects the saved choice; if saved on, load sounds.json now */
-	var chk = setInterval(function () { if (L) { $('chk-sound').checked = L.audio.sound; if (L.audio.sound) sound(''); clearInterval(chk); } }, 100);
+	var chk = setInterval(function () { if (L) { $('chk-sound').checked = L.audio.sound; $('chk-music').checked = L.audio.music; if (L.audio.sound) sound(''); musicUpdate(); clearInterval(chk); } }, 100);
 })();

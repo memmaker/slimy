@@ -15,5 +15,6 @@ emcc -O2 -fcommon -std=gnu99 -DTSL_CONSOLE -DRVIP_AUTO_MORE -Iport \
 cp web/index.html web/slimy.js web/dist/
 cp tileset.png tiledim.png tilerev.png web/dist/
 cp web/tslgo/sprites.png web/dist/tslgo-sprites.png   # tsl-go set, original size
+cp -r web/tslgo/music web/dist/music   # tsl-go recorded tracks, one per level (Music option)
 python3 web/mksounds.py web/dist/sound
 python3 web/make-help.py web/dist/help.html

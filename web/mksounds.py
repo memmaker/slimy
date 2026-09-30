@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Synthesize The Slimy Lichmummy's sound effects at build time: one <event>.wav per RVIP_SOUND("event")
 in the game (*.c, asserted) into <out>, plus <out>/sounds.json {event: [file]}.
-TSL ships no audio upstream (none found in a web search, 2026-09), so these are
-made for it. Stdlib only.
+TSL ships no audio upstream, so these are made for it; events that tsl-go
+(c0ze's Go port) has use its recipes (TSLGO below). Stdlib only.
 Usage (repo root): python3 web/mksounds.py <out>"""
 import glob, json, math, os, random, re, struct, sys, wave
 
@@ -53,6 +53,65 @@ SOUNDS = {
     'stairs':  lambda: notes([587, 554, 494, 440], .06, vol=.3, dec=.5, fm=.6),
     'death':   lambda: notes([349, 330, 311], .25, vol=.35, dec=.3, fm=1.5) + tone(294, 110, 1.0, .35, 1.2, 2),
 }
+
+# tsl-go's effects (github.com/c0ze/tsl-go web/index.html `sfx`, Web Audio
+# recipes: oscillator glides and filtered noise under an 8 ms attack /
+# exponential decay envelope), rendered here to wav with the same parameters.
+# They replace the synthesized sound where tsl-go has an event for the same
+# game action; kill, shoot, drop and teleport keep the sounds above.
+def _env(i, n, peak):
+    t, a = i / R, 0.008
+    d = n / R
+    if t < a:
+        return 0.0001 * (max(peak, .0002) / 0.0001) ** (t / a)
+    return max(peak, .0002) * (0.0001 / max(peak, .0002)) ** ((t - a) / max(d - a, 1e-3))
+
+def g_tone(t0, typ='sine', f0=440, f1=None, dur=.1, gain=.2):
+    n, ph, out = int(R * dur), 0.0, [0.0] * int(R * t0)
+    for i in range(n):
+        f = f0 * ((f1 or f0) / f0) ** (i / n)
+        ph = (ph + f / R) % 1.0
+        x = {'sine': math.sin(2 * math.pi * ph), 'square': 1.0 if ph < .5 else -1.0,
+             'sawtooth': 2 * ph - 1, 'triangle': 4 * abs(ph - .5) - 1}[typ]
+        out.append(x * _env(i, n, gain))
+    return out
+
+def g_noise(t0, dur=.1, gain=.2, typ='bandpass', freq=1000, f1=None, q=1.0):
+    n, out = int(R * dur), [0.0] * int(R * t0)
+    x1 = x2 = y1 = y2 = 0.0
+    for i in range(n):
+        f = min(freq * ((f1 or freq) / freq) ** (i / n), R * .45)
+        w = 2 * math.pi * f / R; al = math.sin(w) / (2 * q); c = math.cos(w)
+        if typ == 'lowpass':    b = ((1 - c) / 2, 1 - c, (1 - c) / 2)
+        elif typ == 'highpass': b = ((1 + c) / 2, -(1 + c), (1 + c) / 2)
+        else:                   b = (al, 0.0, -al)
+        a0 = 1 + al
+        x = rnd.uniform(-1, 1)
+        y = (b[0] * x + b[1] * x1 + b[2] * x2 - (-2 * c) * y1 - (1 - al) * y2) / a0
+        x2, x1, y2, y1 = x1, x, y1, y
+        out.append(y * _env(i, n, gain))
+    return out
+
+TSLGO = {   # our event: tsl-go recipe (its gains; lowpass/highpass Q = Web Audio default)
+    'hit':    lambda: mix(g_noise(0, .10, .5, 'lowpass', 2200, q=.707), g_tone(0, 'triangle', 180, 70, .12, .4)),
+    'hurt':   lambda: mix(g_tone(0, 'sawtooth', 220, 80, .22, .32), g_noise(0, .16, .25, 'lowpass', 900, q=.707)),
+    'death':  lambda: mix(g_tone(0, 'square', 300, 60, .34, .26), g_noise(0, .3, .2, 'lowpass', 1200, q=.707)),
+    'pickup': lambda: mix(g_tone(0, 'square', 520, None, .06, .22), g_tone(.07, 'square', 780, None, .08, .22)),
+    'eat':    lambda: mix(g_noise(0, .08, .3, 'lowpass', 600, q=.707), g_noise(.12, .08, .28, 'lowpass', 520, q=.707)),
+    'quaff':  lambda: mix(*[g_tone(i * .07, 'sine', f, f * .8, .09, .22) for i, f in enumerate((320, 300, 360, 280))]),
+    'read':   lambda: g_noise(0, .18, .18, 'highpass', 2600, q=.707),
+    'wear':   lambda: mix(g_noise(0, .12, .22, 'bandpass', 2000, q=.8), g_tone(.02, 'triangle', 900, 1200, .1, .16)),
+    'stairs': lambda: mix(*([g_tone(i * .1, 'triangle', f, f * .98, .16, .24) for i, f in enumerate((392, 330, 294, 247, 196))]
+                            + [g_noise(.5, .18, .18, 'lowpass', 500, q=.707)])),
+    'spell':  lambda: mix(g_noise(0, .30, .16, 'bandpass', 600, 3600, .6),
+                          *[g_tone(.045 * i, 'sine', f, None, .2, .12) for i, f in enumerate((523, 659, 784, 1047))]),
+}
+def _loud(f):
+    def g():
+        s = f(); m = max(1e-6, max(abs(x) for x in s))
+        return [x * .8 / m for x in s]          # tsl-go plays at 0.35 master; normalise the wav
+    return g
+SOUNDS.update({k: _loud(v) for k, v in TSLGO.items()})
 
 events = set()
 for f in glob.glob('*.c'):

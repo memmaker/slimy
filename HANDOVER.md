@@ -13,6 +13,23 @@
   Wired anyway (explicit request); before any publishing ask c0ze for
   permission or ship only the CC0 DCSS subset. Credits are in Help and
   `port/publish/README.md`.
+- tsl-go sounds + music: tsl-go's effects are Web Audio recipes (its
+  `index.html` `sfx`), not samples; `web/mksounds.py` renders them to wav with
+  the same parameters (TSLGO table: oscillator glides + RBJ biquad noise,
+  8 ms attack / exp decay, normalised) for our events hit, hurt, death,
+  pickup, eat, quaff, read, wear (=equip), stairs (=descend), spell (=cast);
+  kill, shoot, drop, teleport keep the synthesized ones (tsl-go's swoosh/zap
+  are melee swing/wand, not our events; door/step/splash have no hook here).
+  Music: new **Music** checkbox in Audio (off by default, stored as
+  `audio.music` in web-layout.json); C `web_level(level_index)` from
+  `draw_level` (ui.c, on change) -> `Module.rvipLevel` -> loops
+  `music/<level>.mp3` (tsl-go's recorded track `<level>-1.mp3` per level,
+  vendored in `web/tslgo/music/`, 25 MB; the `-2` tracks and tsl-go's
+  adaptive tracker modules not taken). Audio element made only when Music on.
+- Tested (Playwright): sound and music off by default, nothing fetched;
+  after real clicks: sounds.json + drop/wear/pickup wavs fetched and played
+  on those actions; Music -> `music/dungeon.mp3` fetched and playing; both
+  kept over reload; no page errors. Not heard by a person yet (Mac pane).
 - tsl-go tiles: second set, `Tiles` cycles by name `Tiles` (game's own,
   label "TSL") -> `tsl-go` -> `None`, stored in `/slimy/web-layout.json`.
   Sheet `web/tslgo/sprites.png` (tsl-go's atlas, 512x480, 32 px, 16 per row,

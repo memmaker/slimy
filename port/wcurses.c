@@ -200,6 +200,11 @@ void web_end(void) { web_end_js(); }
 EM_JS(void, web_beacon, (const char * ev, const char * killer, int depth, long turns), {
   try { if (Module.rvipBeacon) Module.rvipBeacon(UTF8ToString(ev), UTF8ToString(killer), depth, Number(turns)); } catch (e) {}
 });
+/* RVIP music: the level on screen (LEVEL_*, places.h); the page picks the track */
+EM_JS(void, js_level, (int i), {
+  if (Module.rvipLevel) Module.rvipLevel(i);
+});
+void web_level(int i) { static int last = -1; if (i != last) { last = i; js_level(i); } }
 /* RVIP: sound event from a game action (RVIP_SOUND, main.h); the page plays it */
 EM_JS(void, web_sound, (const char * e), {
   if (Module.rvipSound) Module.rvipSound(UTF8ToString(e));
@@ -207,6 +212,7 @@ EM_JS(void, web_sound, (const char * e), {
 #else
 static void js_map(const int * t, const unsigned int * c, int h, int w, int hy, int hx, const int * t2)
 { (void)t; (void)c; (void)h; (void)w; (void)hy; (void)hx; (void)t2; }
+void web_level(int i) { (void)i; }
 void web_sync(void) { }
 void web_end(void) { }
 void web_beacon(const char * ev, const char * killer, int depth, long turns) { (void)ev; (void)killer; (void)depth; (void)turns; }
