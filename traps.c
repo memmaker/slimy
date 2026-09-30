@@ -520,7 +520,7 @@ blean_t activate_trap(trap_t * trap)
 
 	  if (trap->activations_remaining == 1)
 	  {
-	    level->memory[y][x] = level->map[y][x];
+	    level->memory[y][x] = (gent_t)level->map[y][x];
 	  }
 	}
       }

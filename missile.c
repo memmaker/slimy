@@ -352,7 +352,7 @@ blean_t missile_hit(level_t * level, creature_t * creature,
     return false;
 
   if (casualty != NULL)
-    casualty = false;
+    *casualty = false;
 
   poisoned = false;
   wounded = false;

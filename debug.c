@@ -99,7 +99,7 @@ char * generate_memory_usage_summary()
   strcat(temp, t);
 
   ret = mydup(temp);
-  if (temp == NULL) out_of_memory();
+  if (ret == NULL) out_of_memory();
   mem_alloc.chars += strlen(ret) + 1;
 
   return ret;
@@ -326,7 +326,7 @@ void perform_map_test()
   
   shutdown_everything();
   
-  printf(summary);
+  printf("%s", summary);
   free(summary);
 
   exit(0);
@@ -408,7 +408,7 @@ void print_memory_usage()
   char * summary;
 
   summary = generate_memory_usage_summary();
-  printf(summary);
+  printf("%s", summary);
   free(summary);
 
   return;
@@ -910,7 +910,7 @@ void display_raw_map()
   
   for (y = 0; y < level->size_y; y++)
     for (x = 0; x < level->size_x; x++)
-      level->memory[y][x] = level->map[y][x];
+      level->memory[y][x] = (gent_t)level->map[y][x];
   
   draw_level();
   queue_msg("Displaying raw map...");

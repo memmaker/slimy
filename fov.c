@@ -411,8 +411,8 @@ blean_t can_see_creature(const creature_t * observer,
     return true;
 
   /* */
-  if (abs(observer->y - target->y) <= 1 &&
-      abs(observer->x - target->x) <= 1)
+  if (abs((int)observer->y - (int)target->y) <= 1 &&
+      abs((int)observer->x - (int)target->x) <= 1)
   {
     return true;
   }

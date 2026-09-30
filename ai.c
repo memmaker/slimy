@@ -671,8 +671,8 @@ blean_t retreat(creature_t * creature,
   */
 
   /* Our best bet so far is our current location. */
-  dist_y = abs(flee_y - creature->y);
-  dist_x = abs(flee_x - creature->x);
+  dist_y = abs((int)flee_y - (int)creature->y);
+  dist_x = abs((int)flee_x - (int)creature->x);
   best_distance = sqrt((dist_y * dist_y) + (dist_x * dist_x));
   best_dist_index = 0;
 
@@ -695,8 +695,8 @@ blean_t retreat(creature_t * creature,
     }
 
     /* Calculate the current */
-    dist_y = abs(flee_y - new_y);
-    dist_x = abs(flee_x - new_x);
+    dist_y = abs((int)flee_y - (int)new_y);
+    dist_x = abs((int)flee_x - (int)new_x);
     new_distance = sqrt((dist_y * dist_y) + (dist_x * dist_x));
 
     /* Are we trying to get closer to or away from the player? */

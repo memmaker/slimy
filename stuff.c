@@ -357,7 +357,7 @@ char * get_file_path(const char * filename)
     struct passwd * pw;
     
     pw = getpwuid(getuid());
-    if (pw == NULL) return false;
+    if (pw == NULL) return NULL;
     home_dir = pw->pw_dir;
   }
 #endif

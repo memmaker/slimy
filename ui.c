@@ -1264,7 +1264,7 @@ void constrained_wrap(const unsigned int t, const unsigned int l, const unsigned
       scr_addstr(")");
       x += gent_width + 4;
 
-      if (shit != '\0')
+      if (*shit != '\0')
       {
 	token = ++shit;
 	len = strlen(token);

@@ -165,9 +165,6 @@ by c0ze (tsl.coze.org): tiles from the Dungeon Crawl Stone Soup tileset (CC0; th
 the Crawl and Crawl Stone Soup teams, Eino Keskitalo, David Lawrence Ramsey, Enne Walker,
 Poor_Yurik, Stefan O'Rear and the original RLTiles) plus sprites made for tsl-go, used with permission. Sound effects (hit, hurt, death, pickup, eat, quaff,
 read, wear, stairs, spell) and the level music are tsl-go's too.</li>
-<li>TSL is not free software: its licence allows redistributing the unmodified
-source and asks that unofficial ports contact the author, which was done. The other
-sound effects were synthesized for this port. Built with Emscripten.</li>
 </ul>'''
 
 

@@ -298,7 +298,7 @@ void recharge(creature_t * recharger, item_t * item, item_t * source)
   char * name;
   signed int failure_prob;
 
-  if ((item == NULL))
+  if (item == NULL)
     return;
 
   /* Whatever happens, the number of remaining charges will have changed. */
