@@ -69,6 +69,7 @@ extern int LINES, COLS;
 #define KEY_BACKSPACE 263
 
 void web_map_tile(int y, int x, int code); /* RVIP tiles, map pane */
+void web_map_tile2(int y, int x, int code); /* second set (tsl-go), stored before web_map_tile */
 void web_map_hero(int y, int x); /* RVIP camera: hero's board cell */
 void web_sync(void); /* RVIP: persist IDBFS (awaits) */
 void web_end(void); /* RVIP: game over: sync, page reloads */

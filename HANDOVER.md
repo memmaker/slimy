@@ -1,6 +1,38 @@
 # The Slimy Lichmummy — handover
 
 ## RVIP progress
+- **PUBLISHING BLOCKER (tsl-go assets, 2026-09-30):** the user asked to add
+  the tiles and sounds of github.com/c0ze/tsl-go (Go port of TSL, @0c62dcf).
+  Licence check: the repo has no licence of its own ("The Go port is offered
+  under the same terms" as TSL = not free). Tiles: `assets/tiles/dcss/` are
+  Dungeon Crawl Stone Soup tiles, **CC0** (clean); `gen/` + `anim/` (35
+  sprites incl. player, ratman, ghoul, doors, stairs, water/lava) are
+  "Project art", AI-generated (Google Antigravity / Qwen-Image), **no licence
+  stated**. Music (`web/audio/*.mp3`, cozy-tracker scores): project-made, **no
+  licence stated**. SFX: tsl-go's Web Audio recipes (its own code, TSL terms).
+  Wired anyway (explicit request); before any publishing ask c0ze for
+  permission or ship only the CC0 DCSS subset. Credits are in Help and
+  `port/publish/README.md`.
+- tsl-go tiles: second set, `Tiles` cycles by name `Tiles` (game's own,
+  label "TSL") -> `tsl-go` -> `None`, stored in `/slimy/web-layout.json`.
+  Sheet `web/tslgo/sprites.png` (tsl-go's atlas, 512x480, 32 px, 16 per row,
+  original size) -> `dist/tslgo-sprites.png`; `web/tslgo/sprites.js` is its
+  index, vendored unchanged as the generator's input. `web/mktslgo.py` reads
+  it + the gent enum (`gcc -E gent.h`), hand tables DIRECT/STAND, asserts
+  every drawn gent is mapped and every name exists, writes
+  `port/tslgo_tiles.h` (`tslgo_gent[gent]`, per-level wall/floor families from
+  tsl-go's THEMES keyed by LEVEL_*). C (`map_put`, console.c) computes a
+  second code `top | under<<8 | dim<<16` (255 = none; variant by level cell)
+  -> `web_map_tile2` -> second array of `Module.rvipMap`. JS draws the chosen
+  set, dims MAP_DIM/SLEEP cells with a black overlay (no dim sheet in
+  tsl-go), no animation (frame 0 of water/lava/player).
+- Coverage: 155 drawn gents, 69 with a tsl-go sprite made for them (45%),
+  86 same-set stand-ins (11 wall shapes + obstacle/block -> level wall,
+  weapons/guns -> staff/bow, food -> ration, spell/arrow bolts -> wisp/arrows,
+  ...) = 100% with stand-ins, but **own-art coverage is well under 95%**: many
+  items look alike (all food, all guns). Killer PNGs stay on the own set.
+- Tested (Playwright): own set and tsl-go render (screenshots), tsl-go
+  survives reload, cycle TSL -> tsl-go -> None -> TSL, no page errors.
 - Stages done (cloud parts): 7 (publish prep), 8 (shrine prep), 9 (graveyard).
   Next: the Mac session. Nothing is public; publishing at all needs the
   user's decision (licence: contact the author, Ulf Åström, first).

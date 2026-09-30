@@ -6,6 +6,10 @@
 #include "ui.h"
 #include "glyph.h"
 #include "game.h"
+#ifdef __EMSCRIPTEN__
+#include "places.h"
+#include "tslgo_tiles.h"
+#endif
 
 
 const unsigned int gent_width = 1;
@@ -339,6 +343,22 @@ void map_put(const unsigned int y, const unsigned int x, const gent_t gent, cons
     for (k = 0; k < sizeof(stand_in) / sizeof(stand_in[0]); k++)
       if (stand_in[k][0] == gent) tg = stand_in[k][1];
     top = (tg == gent_floor) ? under : (unsigned int)tg;
+    {
+      /* second set: tsl-go's sprites (port/tslgo_tiles.h, web/mktslgo.py);
+         walls/floors from the level's tsl-go theme, variant by level cell */
+      const level_t * lv = game->player->location;
+      unsigned int li = lv->level_index < LEVELS ? lv->level_index : LEVEL_DUNGEON;
+      unsigned int ly = y + view_top, lx = x + view_left, h = ly * 7 + lx * 13 + (ly ^ lx);
+      unsigned int wn = 0, fn = 0, t2, u2;
+      while (wn < 10 && tslgo_wall[li][wn] != 255) wn++;
+      while (fn < 10 && tslgo_floor[li][fn] != 255) fn++;
+      u2 = tslgo_floor[li][h % fn];
+      t2 = (gent == gent_blank) ? 255 : tslgo_gent[gent];
+      if (gent == gent_blank) u2 = 255;
+      if (t2 == 254) { t2 = tslgo_wall[li][h % wn]; u2 = t2; }
+      else if (t2 == 253) t2 = 255;
+      web_map_tile2(y, x, (int)(t2 | (u2 << 8) | ((sheet == 1) << 16)));
+    }
     web_map_tile(y, x, (int)(top | (under << 10) | (sheet << 20)));
   }
 #endif

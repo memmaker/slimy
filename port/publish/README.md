@@ -29,3 +29,12 @@ Files (for ~/Games/roguelikes-index):
   (or paste the body of `killers.py`) and run only `make.py slimy`.
 - `shrine/`: shrine page draft (stage 8), see `shrine/NOTES.md`.
 - Game page: `#bar h1` -> `<a href="../shrine/slimy.html">` once the shrine is live.
+
+Credits for the second tile set (and tsl-go sounds/music, see HANDOVER): tsl-go by
+c0ze, https://github.com/c0ze/tsl-go (tsl.coze.org). Its tiles: Dungeon Crawl Stone
+Soup tileset (CC0; Crawl/Crawl Stone Soup teams, Eino Keskitalo, David Lawrence
+Ramsey, Enne Walker, Poor_Yurik, Stefan O'Rear, original RLTiles) plus sprites made
+for tsl-go (AI-generated, no licence stated). Put this line in the card/shrine
+"About" text and the game README if the tsl-go set ships. **Publishing blocker:**
+tsl-go states no licence for its own art/music (see HANDOVER.md).
+Killer PNGs stay on the game's own set (tsl-go has own art for 45% of gents only).

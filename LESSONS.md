@@ -29,3 +29,6 @@
 - 5.8: tile sheets with palette transparency (magenta key): `convert('RGBA')` in PIL before cropping killer/card art, or the key colour shows (TSL).
 - 5.17: Pillow is not preinstalled in the cloud but `pip install pillow` works through the proxy (TSL).
 - 5.13: happyponyland.net (DNS/403) and archive.org Wayback (403) are blocked from the cloud; WebSearch snippets (backloggd, Roguetemple) still give a year (TSL).
+- 5.8: a second tile set with a different grid (TSL own 20 px vs tsl-go 32 px atlas): C computes one code per set in the same map hook and the shim sends both arrays; JS picks by the stored set name, so switching needs no C round trip (TSL).
+- 5.8: a port's atlas index (tsl-go `sprites.js`: name -> x,y, level themes) is a ready name table: vendor it unchanged as generator input, map gent -> name by hand, emit a C header (TSL `web/mktslgo.py`).
+- 5.8/5.11: check a third-party port's asset licences per directory: tsl-go mixes CC0 (DCSS) with unlicensed AI-generated sprites and music (TSL).

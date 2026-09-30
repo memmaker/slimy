@@ -133,7 +133,9 @@ GUIDE = [
 ]
 
 WEB = '''<ul>
-<li>The map uses TSL's own tiles (or text after <em>Tiles</em> in the top bar). Map,
+<li>The map uses TSL's own tiles; <em>Tiles</em> in the top bar cycles TSL → tsl-go
+(the sprites of <a href="https://github.com/c0ze/tsl-go">c0ze/tsl-go</a>, a Go port of TSL)
+→ None (text). The choice is remembered. Map,
 Messages and Status are separate windows; <em>A−</em> / <em>A+</em> on a title bar change
 that window's text or tile size, <em>Windows</em> arranges them. Menus, help pages and
 the death screen appear as text boxes over the map.</li>
@@ -154,6 +156,10 @@ VERSION = '''<ul>
 (<a href="http://happyponyland.net/">happyponyland.net</a>), from the source kept at
 <a href="https://gitlab.com/vitaly-zdanevich/the-slimy-lichmummy">gitlab.com/vitaly-zdanevich/the-slimy-lichmummy</a>.
 Tiles and fonts are the game's own (fonts: modified Terminus, SIL OFL).</li>
+<li>The second tile set is from <a href="https://github.com/c0ze/tsl-go">c0ze/tsl-go</a>
+by c0ze (tsl.coze.org): tiles from the Dungeon Crawl Stone Soup tileset (CC0; thanks to
+the Crawl and Crawl Stone Soup teams, Eino Keskitalo, David Lawrence Ramsey, Enne Walker,
+Poor_Yurik, Stefan O'Rear and the original RLTiles) plus sprites made for tsl-go.</li>
 <li>TSL is not free software: its licence allows redistributing the unmodified
 source and asks that unofficial ports contact the author. Sound effects were
 synthesized for this port. Built with Emscripten.</li>

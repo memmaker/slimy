@@ -161,6 +161,13 @@ static void js_pane(int pane, const char * html, int rows)
 static int tile_code[TMAX];
 static chtype tile_cell[TMAX];
 static int tile_out[TMAX];
+static int tile_code2[TMAX], tile_out2[TMAX];
+
+void web_map_tile2(int y, int x, int code)
+{
+  if (board_win == NULL || y < 0 || x < 0 || y >= board_win->h || x >= board_win->w) return;
+  if (y * board_win->w + x < TMAX) tile_code2[y * board_win->w + x] = code;
+}
 
 void web_map_tile(int y, int x, int code)
 {
@@ -176,9 +183,10 @@ static int hero_y = -1, hero_x = -1;
 void web_map_hero(int y, int x) { hero_y = y; hero_x = x; }
 
 #ifdef __EMSCRIPTEN__
-EM_JS(void, js_map, (const int * tiles, const unsigned int * cells, int h, int w, int hy, int hx), {
+EM_JS(void, js_map, (const int * tiles, const unsigned int * cells, int h, int w, int hy, int hx, const int * tiles2), {
   if (Module.rvipMap) Module.rvipMap(new Int32Array(HEAPU8.buffer, tiles, h * w),
-                                     new Uint32Array(HEAPU8.buffer, cells, h * w), h, w, hy, hx);
+                                     new Uint32Array(HEAPU8.buffer, cells, h * w), h, w, hy, hx,
+                                     new Int32Array(HEAPU8.buffer, tiles2, h * w));
 });
 EM_ASYNC_JS(void, web_sync, (void), {
   if (Module.rvipSync) await Module.rvipSync();
@@ -197,8 +205,8 @@ EM_JS(void, web_sound, (const char * e), {
   if (Module.rvipSound) Module.rvipSound(UTF8ToString(e));
 });
 #else
-static void js_map(const int * t, const unsigned int * c, int h, int w, int hy, int hx)
-{ (void)t; (void)c; (void)h; (void)w; (void)hy; (void)hx; }
+static void js_map(const int * t, const unsigned int * c, int h, int w, int hy, int hx, const int * t2)
+{ (void)t; (void)c; (void)h; (void)w; (void)hy; (void)hx; (void)t2; }
 void web_sync(void) { }
 void web_end(void) { }
 void web_beacon(const char * ev, const char * killer, int depth, long turns) { (void)ev; (void)killer; (void)depth; (void)turns; }
@@ -209,8 +217,12 @@ static void send_map_tiles(WINDOW * w)
   int i, n = w->h * w->w;
   if (n > TMAX) n = TMAX;
   for (i = 0; i < n; i++)
-    tile_out[i] = (tile_cell[i] == w->cells[i] && (w->cells[i] & A_CHARTEXT) != ' ') ? tile_code[i] : -1;
-  js_map(tile_out, w->cells, w->h, w->w, hero_y, hero_x);
+  {
+    int ok = (tile_cell[i] == w->cells[i] && (w->cells[i] & A_CHARTEXT) != ' ');
+    tile_out[i] = ok ? tile_code[i] : -1;
+    tile_out2[i] = ok ? tile_code2[i] : -1;
+  }
+  js_map(tile_out, w->cells, w->h, w->w, hero_y, hero_x, tile_out2);
 }
 
 /* Builds the window as HTML lines, trimmed (rule 5), and sends it. */

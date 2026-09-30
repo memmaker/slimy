@@ -2,14 +2,16 @@
  * The game (port/wcurses.c) sends each curses window as its own pane of HTML lines:
  * board -> Map, message bar -> Messages, status -> Status (also the inventory browser),
  * stdscr -> pop-up over the map (command menu, help, item menus, death screen).
- * The map cells' tiles come from C (map_put, rule 7): code = top | under<<10 | sheet<<20, -1 = text. */
+ * The map cells' tiles come from C (map_put, rule 7), one code array per set, -1 = text:
+ *   own set 'Tiles' (tileset.png): top | under<<10 | sheet<<20;
+ *   'tsl-go' (tslgo-sprites.png, 32 px, 16 per row): top | under<<8 | dim<<16, 255 = none. */
 (function () {
 	'use strict';
 	function $(id) { return document.getElementById(id); }
 	var DIR = RvipApp.dir, LAYOUT = DIR + '/web-layout.json', SAVE = DIR + '/TSL-SAVE';
 	var TILE = 20, L = null, wm = null, app = null, rects = {};
-	var sheets = [new Image(), new Image(), new Image()], NAMES = ['tileset.png', 'tiledim.png', 'tilerev.png'];
-	var tilesReady = false, tileGen = 0, lastMap = null;
+	var SETS = { Tiles: ['tileset.png', 'tiledim.png', 'tilerev.png'], 'tsl-go': ['tslgo-sprites.png'] }, ORDER = ['Tiles', 'tsl-go', 'None'];
+	var sheets = { Tiles: [], 'tsl-go': [] }, ready = {}, tileGen = 0, lastMap = null;
 
 	function status(s, err) { if (app) app.status(s, err); else { var e = $('status'); e.textContent = s; e.hidden = !s; } }
 
@@ -18,7 +20,7 @@
 		var d = { tiles: 'Tiles', face: '', mapFace: '', audio: { sound: false }, wm: null };
 		try {
 			var s = JSON.parse(Module.FS.readFile(LAYOUT, { encoding: 'utf8' }));
-			if (s.tiles === 'Tiles' || s.tiles === 'None') d.tiles = s.tiles;
+			if (ORDER.indexOf(s.tiles) >= 0) d.tiles = s.tiles;
 			if (typeof s.face === 'string') d.face = s.face;
 			if (typeof s.mapFace === 'string') d.mapFace = s.mapFace;
 			if (s.audio) d.audio = { sound: s.audio.sound === true };
@@ -40,11 +42,12 @@
 	/* A−/A+ on the Map: the WM's size (px) is the text-mode font; tiles step in whole multiples */
 	function mapFs() { return RvipWM.fontSize('map'); }
 	function scale() { return Math.max(1, Math.min(4, Math.round(mapFs()) - 15)); }
-	function tilesOn() { return L && L.tiles === 'Tiles' && tilesReady; }
+	function tilesOn() { return L && L.tiles !== 'None' && ready[L.tiles]; }
+	function cellPx() { return L && L.tiles === 'tsl-go' ? 32 : TILE; }
 	function drawMap() {
 		var c = $('mapc');
 		if (!lastMap || !tilesOn()) return;
-		var t = lastMap.t, cells = lastMap.c, h = lastMap.h, w = lastMap.w, S = TILE * scale();
+		var go = L.tiles === 'tsl-go', t = go ? lastMap.t2 : lastMap.t, cells = lastMap.c, h = lastMap.h, w = lastMap.w, S = cellPx() * scale();
 		if (c.width !== w * S || c.height !== h * S) { c.width = w * S; c.height = h * S; }
 		var g = c.getContext('2d');
 		g.imageSmoothingEnabled = false;
@@ -52,8 +55,13 @@
 		g.font = (S - 4) + 'px monospace'; g.textAlign = 'center'; g.textBaseline = 'middle';
 		for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) {
 			var i = y * w + x, code = t[i], dx = x * S, dy = y * S;
-			if (code >= 0) {
-				var sh = sheets[(code >> 20) & 3], top = code & 1023, und = (code >> 10) & 1023;
+			if (code >= 0 && go) {
+				var gs = sheets['tsl-go'][0], gt = code & 255, gu = (code >> 8) & 255;
+				if (gu !== 255) g.drawImage(gs, (gu % 16) * 32, (gu >> 4) * 32, 32, 32, dx, dy, S, S);
+				if (gt !== 255 && gt !== gu) g.drawImage(gs, (gt % 16) * 32, (gt >> 4) * 32, 32, 32, dx, dy, S, S);
+				if (code & 0x10000) { g.fillStyle = 'rgba(0,0,0,0.55)'; g.fillRect(dx, dy, S, S); }
+			} else if (code >= 0) {
+				var sh = sheets.Tiles[(code >> 20) & 3], top = code & 1023, und = (code >> 10) & 1023;
 				g.drawImage(sh, 1 + (und % 16) * 21, 161 + ((und / 16) | 0) * 21, TILE, TILE, dx, dy, S, S);
 				if (top !== und) g.drawImage(sh, 1 + (top % 16) * 21, 161 + ((top / 16) | 0) * 21, TILE, TILE, dx, dy, S, S);
 			} else {
@@ -72,7 +80,7 @@
 		$('mapc').hidden = !on; $('map').hidden = on;
 		if (!lastMap) return;
 		var cw, ch, w, h;
-		if (on) { cw = ch = TILE * scale(); w = lastMap.w * cw; h = lastMap.h * ch; }
+		if (on) { cw = ch = cellPx() * scale(); w = lastMap.w * cw; h = lastMap.h * ch; }
 		else {
 			var m = $('map'); m.style.width = m.style.height = '';
 			var r = cellSize(); cw = r.w; ch = r.h; w = lastMap.w * cw; h = lastMap.h * ch;
@@ -92,18 +100,21 @@
 	function redrawMap() { drawMap(); camera(); }
 
 	/* ---------- tiles: the game's own tileset.png (+ dim/rev sheets), chosen by name ---------- */
+	/* sets by name: 'Tiles' = the game's own, 'tsl-go' = c0ze/tsl-go's sprites, 'None' = text */
 	function loadSheets(done) {
-		var gen = ++tileGen, left = sheets.length;
-		NAMES.forEach(function (n, k) {
-			sheets[k].onload = function () { if (gen === tileGen && --left === 0) { tilesReady = true; if (done) done(); redrawMap(); } };
-			sheets[k].onerror = function () { if (gen === tileGen) { status('Could not load the tile set; using text.', true); if (done) done(); } };
-			sheets[k].src = n;
+		var set = L.tiles, gen = ++tileGen, names = SETS[set], left = names.length;
+		if (!names || ready[set]) { if (done) done(); redrawMap(); return; }
+		names.forEach(function (n, k) {
+			var im = sheets[set][k] = new Image();
+			im.onload = function () { if (--left === 0) { ready[set] = true; if (gen === tileGen) { if (done) done(); redrawMap(); } } };
+			im.onerror = function () { if (gen === tileGen) { status('Could not load the tile set; using text.', true); if (done) done(); } };
+			im.src = n;
 		});
 	}
-	function renderTiles() { $('btn-tiles').textContent = 'Tiles: ' + (L && L.tiles === 'None' ? 'None' : 'on'); renderMapSel(); }
+	function renderTiles() { $('btn-tiles').textContent = 'Tiles: ' + (L ? (L.tiles === 'Tiles' ? 'TSL' : L.tiles) : 'TSL'); renderMapSel(); }
 	function toggleTiles() {
-		L.tiles = L.tiles === 'Tiles' ? 'None' : 'Tiles'; saveLayout(); renderTiles();
-		if (L.tiles === 'Tiles' && !tilesReady) loadSheets(); else { if (L.tiles === 'None') tileGen++; redrawMap(); }
+		L.tiles = ORDER[(ORDER.indexOf(L.tiles) + 1) % ORDER.length]; saveLayout(); renderTiles();
+		if (L.tiles !== 'None') loadSheets(); else { tileGen++; redrawMap(); }
 	}
 
 	/* ---------- fonts ---------- */
@@ -114,7 +125,7 @@
 	function renderMapSel() {
 		var bs = document.querySelector('#t-map .wm-btns');
 		if (bs && mapSel.parentNode !== bs) bs.insertBefore(mapSel, bs.firstChild);
-		mapSel.hidden = !!(L && L.tiles === 'Tiles');
+		mapSel.hidden = !!(L && L.tiles !== 'None');
 		mapSel.value = (L && L.mapFace) || '';
 	}
 	function face(n) { return n ? '"' + n + '", ui-monospace, Menlo, monospace' : 'ui-monospace, Menlo, monospace'; }
@@ -208,7 +219,7 @@
 				renderTiles();
 				$('game').hidden = false; makeWM(); loadFace(L.face); if (L.mapFace) loadFace(L.mapFace);
 				$('sel-font').value = L.face || '';
-				if (L.tiles === 'Tiles') loadSheets(function () { Module.removeRunDependency('idbfs'); });
+				if (L.tiles !== 'None') loadSheets(function () { Module.removeRunDependency('idbfs'); });
 				else Module.removeRunDependency('idbfs');
 			});
 		}],
@@ -238,8 +249,8 @@
 				app.sync(function () { status('Game over. Starting a new game…'); setTimeout(function () { location.reload(); }, 1500); r(); });
 			});
 		},
-		rvipMap: function (t, c, h, w, hy, hx) {
-			lastMap = { t: Int32Array.from(t), c: Uint32Array.from(c), h: h, w: w, hy: hy, hx: hx };
+		rvipMap: function (t, c, h, w, hy, hx, t2) {
+			lastMap = { t: Int32Array.from(t), t2: Int32Array.from(t2), c: Uint32Array.from(c), h: h, w: w, hy: hy, hx: hx };
 			window.slimyTiles = lastMap;
 			redrawMap();
 		},
